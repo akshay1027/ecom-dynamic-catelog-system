@@ -17,16 +17,16 @@
 - [x] Initial commit + push
 
 ## Phase 1: Data Layer + ADRs
-- [ ] ADR-001: Data model
-- [ ] ADR-002: API design
-- [ ] backend/package.json + jest.config.js
-- [ ] npm install (backend)
-- [ ] RED: store.test.js (12 tests)
-- [ ] RED: product.test.js (8 tests)
-- [ ] GREEN: inMemoryStore.js
-- [ ] GREEN: product.js
-- [ ] REFACTOR: clean up
-- [ ] All 20 unit tests green
+- [x] ADR-001: Data model
+- [x] ADR-002: API design
+- [x] backend/package.json + jest.config.js
+- [x] npm install (backend)
+- [x] RED: store.test.js (12 tests)
+- [x] RED: product.test.js (8 tests)
+- [x] GREEN: inMemoryStore.js
+- [x] GREEN: product.js
+- [x] REFACTOR: clean up
+- [x] All 20 unit tests green
 
 ## Phase 2: Backend API (TDD)
 - [ ] RED: products.api.test.js (~32 integration tests)
