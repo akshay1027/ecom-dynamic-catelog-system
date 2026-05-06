@@ -51,12 +51,12 @@
 - [x] All ~23 frontend tests green
 
 ## Phase 4: Integration + Release
-- [ ] Update CORS (allow localhost:5173)
-- [ ] Verify Vite proxy config
-- [ ] Add CSS (ProductList grid, ProductCard, SearchFilter)
-- [ ] Smoke test (seed + verify in browser)
-- [ ] Create GitHub branch: feat/initial-catalog-system
-- [ ] Push all files via GitHub MCP
-- [ ] Create GitHub PR
-- [ ] Update docs/tasks.md (all done)
-- [ ] Write session log
+- [x] Update CORS (allow localhost:5173)
+- [x] Verify Vite proxy config
+- [x] Add CSS (ProductList grid, ProductCard, SearchFilter)
+- [x] Smoke test (seed + verify in browser)
+- [x] Create GitHub branch: feat/phase-4-integration-and-styling
+- [x] Push all files via GitHub MCP
+- [x] Create GitHub PR
+- [x] Update docs/tasks.md (all done)
+- [x] Write session log

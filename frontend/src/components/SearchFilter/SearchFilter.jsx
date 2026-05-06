@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import './SearchFilter.css';
 
 const CATEGORIES = ['', 'apparel', 'furniture', 'electronics'];
 
@@ -21,52 +22,52 @@ export default function SearchFilter({ onFiltersChange }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
+    <div className="search-filter">
+      <div className="search-filter__group">
         <input
+          className="search-filter__input"
           type="text"
           placeholder="Search products..."
           value={filters.name || ''}
           onChange={e => update({ name: e.target.value })}
-          style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
         />
       </div>
-      <div>
-        <label htmlFor="category-select" style={{ display: 'block', marginBottom: 4 }}>Category</label>
+      <div className="search-filter__group">
+        <label className="search-filter__label" htmlFor="category-select">Category</label>
         <select
+          className="search-filter__select"
           id="category-select"
           value={filters.category || ''}
           onChange={e => update({ category: e.target.value })}
-          style={{ width: '100%', padding: 8 }}
         >
           {CATEGORIES.map(c => (
             <option key={c} value={c}>{c === '' ? 'All categories' : c}</option>
           ))}
         </select>
       </div>
-      <div>
-        <label htmlFor="min-price" style={{ display: 'block', marginBottom: 4 }}>Min Price</label>
+      <div className="search-filter__group">
+        <label className="search-filter__label" htmlFor="min-price">Min Price</label>
         <input
+          className="search-filter__input"
           id="min-price"
           type="number"
           min="0"
           value={filters.minPrice || ''}
           onChange={e => update({ minPrice: e.target.value })}
-          style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
         />
       </div>
-      <div>
-        <label htmlFor="max-price" style={{ display: 'block', marginBottom: 4 }}>Max Price</label>
+      <div className="search-filter__group">
+        <label className="search-filter__label" htmlFor="max-price">Max Price</label>
         <input
+          className="search-filter__input"
           id="max-price"
           type="number"
           min="0"
           value={filters.maxPrice || ''}
           onChange={e => update({ maxPrice: e.target.value })}
-          style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
         />
       </div>
-      <button onClick={handleReset} style={{ padding: 8, cursor: 'pointer' }}>Reset</button>
+      <button className="search-filter__reset" onClick={handleReset}>Reset</button>
     </div>
   );
 }
