@@ -7,7 +7,13 @@ const productsRouter = require('./routes/products');
 const app = express();
 
 app.use(express.json({ limit: '1mb' }));
-app.use(cors());
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type'],
+}));
 
 app.use('/api/v1/products', productsRouter);
 
