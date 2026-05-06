@@ -1,6 +1,7 @@
 'use strict';
 
 const app = require('./app');
+const { seed } = require('./seed');
 
 const PORT = process.env.PORT || 3001;
 
@@ -11,4 +12,5 @@ app.listen(PORT, () => {
     port: PORT,
     env: process.env.NODE_ENV || 'development',
   }));
+  seed();
 });
