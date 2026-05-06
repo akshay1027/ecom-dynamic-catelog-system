@@ -1,32 +1,43 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 
-// Mock useProducts and useBrands hooks
+// Mock hooks used by CatalogPage (loaded via route)
 vi.mock('./hooks/useProducts', () => ({
   useProducts: vi.fn(() => ({ items: [], total: 0, loading: false, error: null })),
   useBrands: vi.fn(() => ({ brands: [], loading: false, error: null })),
 }));
 
-describe('App drawer behavior', () => {
-  it('shows filter toggle button on mobile', () => {
-    render(<App />);
-    expect(screen.getByRole('button', { name: /filters/i })).toBeTruthy();
+// Mock API used by AdminPage (loaded via route)
+vi.mock('./api/products', () => ({
+  brandsApi: { list: vi.fn().mockResolvedValue([]) },
+  productsApi: {
+    list: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+    create: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
+  },
+}));
+
+describe('App navigation', () => {
+  it('renders the nav bar with Catalog and Admin links', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>
+    );
+    // Use getAllByText since "Catalog" appears in nav link and page heading
+    expect(screen.getAllByText(/catalog/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: /^admin$/i })).toBeTruthy();
   });
 
-  it('opens drawer when filter toggle is clicked', () => {
-    render(<App />);
-    const sidebar = document.querySelector('.app-sidebar');
-    expect(sidebar.classList.contains('open')).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: /filters/i }));
-    expect(sidebar.classList.contains('open')).toBe(true);
-  });
-
-  it('closes drawer when overlay is clicked', () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /filters/i }));
-    const overlay = document.querySelector('.drawer-overlay');
-    fireEvent.click(overlay);
-    expect(document.querySelector('.app-sidebar').classList.contains('open')).toBe(false);
+  it('renders nav brand link', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(screen.getByText('ShopCatalog')).toBeTruthy();
   });
 });
