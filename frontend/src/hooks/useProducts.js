@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productsApi } from '../api/products';
+import { productsApi, brandsApi } from '../api/products';
 
 export function useProducts(filters = {}) {
   const [items, setItems] = useState([]);
@@ -37,4 +37,17 @@ export function useProducts(filters = {}) {
   }, [filtersKey]);
 
   return { items, total, loading, error };
+}
+
+export function useBrands() {
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    brandsApi.list()
+      .then(data => { setBrands(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => { setBrands([]); setLoading(false); });
+  }, []);
+
+  return { brands, loading };
 }

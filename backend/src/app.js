@@ -3,6 +3,7 @@
 const express = require('express');
 const cors = require('cors');
 const productsRouter = require('./routes/products');
+const brandsRouter = require('./routes/brands');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(cors({
 }));
 
 app.use('/api/v1/products', productsRouter);
+app.use('/api/v1/brands', brandsRouter);
 
 // Global error handler — 4-arg signature required by Express
 app.use((err, req, res, next) => {

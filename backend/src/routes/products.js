@@ -2,6 +2,7 @@
 
 const router = require('express').Router();
 const store = require('../store/inMemoryStore');
+const brandStore = require('../store/brandStore');
 const { sanitizeProduct } = require('../models/product');
 const { validateCreate, validateUpdate, validateListQuery } = require('../middleware/validate');
 
@@ -17,6 +18,11 @@ function sendError(res, code, message, status) {
 router.post('/', validateCreate, (req, res, next) => {
   try {
     const sanitized = sanitizeProduct(req.body);
+    const brand = brandStore.findById(sanitized.brandId);
+    if (!brand) {
+      return sendError(res, 'INVALID_REFERENCE', 'brandId does not reference a valid brand', 400);
+    }
+    sanitized.brandName = brand.name;
     const product = store.create(sanitized);
     return sendSuccess(res, product, 201);
   } catch (err) {
@@ -28,7 +34,7 @@ router.post('/', validateCreate, (req, res, next) => {
 
 // GET /api/v1/products — must be before /:id to avoid route conflict
 router.get('/', validateListQuery, (req, res) => {
-  const { name, category, type, minPrice, maxPrice, tags, page, limit } = req.query;
+  const { name, category, type, minPrice, maxPrice, tags, page, limit, brandId } = req.query;
   // req.query.attributes arrives as an object when bracket notation is used: ?attributes[color]=red
   const attributes = req.query.attributes;
 
@@ -42,6 +48,7 @@ router.get('/', validateListQuery, (req, res) => {
   if (tags) filters.tags = tags; // comma-separated string; store.search handles splitting
   if (page) filters.page = Number(page);
   if (limit) filters.limit = Number(limit);
+  if (brandId) filters.brandId = brandId;
 
   const result = store.search(filters);
   return sendSuccess(res, result);
@@ -59,6 +66,11 @@ router.get('/:id', (req, res) => {
 // PUT /api/v1/products/:id
 router.put('/:id', validateUpdate, (req, res, next) => {
   try {
+    if (req.body.brandId) {
+      const brand = brandStore.findById(req.body.brandId);
+      if (!brand) return sendError(res, 'INVALID_REFERENCE', 'brandId does not reference a valid brand', 400);
+      req.body.brandName = brand.name;
+    }
     const updated = store.update(req.params.id, req.body);
     if (!updated) {
       return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);

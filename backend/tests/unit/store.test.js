@@ -17,6 +17,8 @@ describe('store.create()', () => {
       category: 'apparel',
       type: 'shirt',
       stock: 10,
+      brandId: 'test-brand-id',
+      brandName: 'Test Brand',
     });
     expect(product.id).toBeDefined();
     expect(typeof product.id).toBe('string');
@@ -34,6 +36,8 @@ describe('store.create()', () => {
       category: 'furniture',
       type: 'sofa',
       stock: 2,
+      brandId: 'test-brand-id',
+      brandName: 'Test Brand',
     });
     expect(product.images).toEqual([]);
     expect(product.tags).toEqual([]);
@@ -50,6 +54,8 @@ describe('store.create()', () => {
       type: 'shirt',
       stock: 5,
       attributes: { size: 'M', color: 'blue', material: 'cotton' },
+      brandId: 'test-brand-id',
+      brandName: 'Test Brand',
     });
     expect(product.attributes.size).toBe('M');
     expect(product.attributes.color).toBe('blue');
@@ -57,24 +63,29 @@ describe('store.create()', () => {
   });
 
   test('throws if required field name is missing', () => {
-    expect(() => store.create({ price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1 }))
+    expect(() => store.create({ price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'test-brand-id' }))
       .toThrow();
   });
 
   test('throws if required field price is missing', () => {
-    expect(() => store.create({ name: 'Shirt', currency: 'USD', category: 'apparel', type: 'shirt', stock: 1 }))
+    expect(() => store.create({ name: 'Shirt', currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'test-brand-id' }))
       .toThrow();
   });
 
   test('throws if price is negative', () => {
-    expect(() => store.create({ name: 'Shirt', price: -1, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1 }))
+    expect(() => store.create({ name: 'Shirt', price: -1, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'test-brand-id' }))
+      .toThrow();
+  });
+
+  test('throws if brandId is missing', () => {
+    expect(() => store.create({ name: 'Shirt', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1 }))
       .toThrow();
   });
 });
 
 describe('store.findById()', () => {
   test('returns the product for a known id', () => {
-    const created = store.create({ name: 'Lamp', price: 50, currency: 'USD', category: 'furniture', type: 'lamp', stock: 3 });
+    const created = store.create({ name: 'Lamp', price: 50, currency: 'USD', category: 'furniture', type: 'lamp', stock: 3, brandId: 'test-brand-id', brandName: 'Test Brand' });
     const found = store.findById(created.id);
     expect(found).not.toBeNull();
     expect(found.id).toBe(created.id);
@@ -88,7 +99,7 @@ describe('store.findById()', () => {
 
 describe('store.update()', () => {
   test('merges patch fields and updates updatedAt but not createdAt', () => {
-    const created = store.create({ name: 'Sofa', price: 300, currency: 'USD', category: 'furniture', type: 'sofa', stock: 1 });
+    const created = store.create({ name: 'Sofa', price: 300, currency: 'USD', category: 'furniture', type: 'sofa', stock: 1, brandId: 'test-brand-id', brandName: 'Test Brand' });
     const originalCreatedAt = created.createdAt;
 
     // Small delay to ensure updatedAt differs
@@ -108,6 +119,7 @@ describe('store.update()', () => {
     const created = store.create({
       name: 'Laptop', price: 999, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5,
       attributes: { brand: 'Dell', ram: '16GB' },
+      brandId: 'test-brand-id', brandName: 'Test Brand',
     });
     const updated = store.update(created.id, { attributes: { ram: '32GB', storage: '1TB' } });
     expect(updated.attributes.brand).toBe('Dell'); // preserved
@@ -118,7 +130,7 @@ describe('store.update()', () => {
 
 describe('store.remove()', () => {
   test('returns true and removes the product for a known id', () => {
-    const created = store.create({ name: 'Chair', price: 150, currency: 'USD', category: 'furniture', type: 'chair', stock: 4 });
+    const created = store.create({ name: 'Chair', price: 150, currency: 'USD', category: 'furniture', type: 'chair', stock: 4, brandId: 'test-brand-id', brandName: 'Test Brand' });
     expect(store.remove(created.id)).toBe(true);
     expect(store.findById(created.id)).toBeNull();
   });
@@ -130,11 +142,11 @@ describe('store.remove()', () => {
 
 describe('store.search()', () => {
   beforeEach(() => {
-    store.create({ name: 'Red T-Shirt', price: 20, currency: 'USD', category: 'apparel', type: 'tshirt', stock: 10, attributes: { color: 'red', size: 'M' }, tags: ['sale', 'summer'] });
-    store.create({ name: 'Blue Jeans', price: 60, currency: 'USD', category: 'apparel', type: 'jeans', stock: 5, attributes: { color: 'blue', size: 'L' }, tags: ['summer'] });
-    store.create({ name: 'Oak Desk', price: 400, currency: 'USD', category: 'furniture', type: 'desk', stock: 2, attributes: { material: 'oak', color: 'brown' }, tags: [] });
-    store.create({ name: 'Gaming Laptop', price: 1200, currency: 'USD', category: 'electronics', type: 'laptop', stock: 3, attributes: { brand: 'Asus', ram: '32GB' }, tags: ['sale'] });
-    store.create({ name: 'Pine Bookshelf', price: 150, currency: 'USD', category: 'furniture', type: 'bookshelf', stock: 8, attributes: { material: 'pine', color: 'white' }, tags: [] });
+    store.create({ name: 'Red T-Shirt', price: 20, currency: 'USD', category: 'apparel', type: 'tshirt', stock: 10, attributes: { color: 'red', size: 'M' }, tags: ['sale', 'summer'], brandId: 'brand-apparel', brandName: 'Apparel Co' });
+    store.create({ name: 'Blue Jeans', price: 60, currency: 'USD', category: 'apparel', type: 'jeans', stock: 5, attributes: { color: 'blue', size: 'L' }, tags: ['summer'], brandId: 'brand-apparel', brandName: 'Apparel Co' });
+    store.create({ name: 'Oak Desk', price: 400, currency: 'USD', category: 'furniture', type: 'desk', stock: 2, attributes: { material: 'oak', color: 'brown' }, tags: [], brandId: 'brand-furniture', brandName: 'Furniture Co' });
+    store.create({ name: 'Gaming Laptop', price: 1200, currency: 'USD', category: 'electronics', type: 'laptop', stock: 3, attributes: { brand: 'Asus', ram: '32GB' }, tags: ['sale'], brandId: 'brand-electronics', brandName: 'Electronics Co' });
+    store.create({ name: 'Pine Bookshelf', price: 150, currency: 'USD', category: 'furniture', type: 'bookshelf', stock: 8, attributes: { material: 'pine', color: 'white' }, tags: [], brandId: 'brand-furniture', brandName: 'Furniture Co' });
   });
 
   test('returns all products with no filters (default pagination)', () => {

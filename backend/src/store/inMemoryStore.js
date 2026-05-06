@@ -3,9 +3,10 @@
 const { v4: uuidv4 } = require('uuid');
 
 const store = new Map();
-// Secondary indexes for fast category/type filtering
+// Secondary indexes for fast category/type/brand filtering
 const byCategory = new Map(); // category -> Set of ids
 const byType = new Map();     // type -> Set of ids
+const byBrand = new Map();    // brandId -> Set of ids
 
 function addToIndex(indexMap, key, id) {
   if (!indexMap.has(key)) indexMap.set(key, new Set());
@@ -33,6 +34,7 @@ function create(data) {
   if (!data.category) throw new Error('category is required');
   if (!data.type) throw new Error('type is required');
   if (data.stock === undefined || data.stock === null) throw new Error('stock is required');
+  if (!data.brandId) throw new Error('brandId is required');
 
   const now = new Date().toISOString();
   const product = {
@@ -47,6 +49,8 @@ function create(data) {
     stock: Math.floor(Number(data.stock)),
     tags: data.tags || [],
     attributes: data.attributes || {},
+    brandId: data.brandId || '',
+    brandName: data.brandName || '',
     createdAt: now,
     updatedAt: now,
   };
@@ -54,6 +58,7 @@ function create(data) {
   store.set(product.id, product);
   addToIndex(byCategory, product.category, product.id);
   addToIndex(byType, product.type, product.id);
+  addToIndex(byBrand, product.brandId, product.id);
 
   return { ...product };
 }
@@ -84,7 +89,7 @@ function update(id, patch) {
     updated.attributes = { ...existing.attributes, ...patch.attributes };
   }
 
-  // Update indexes if category or type changed
+  // Update indexes if category, type, or brandId changed
   if (patch.category && patch.category !== existing.category) {
     removeFromIndex(byCategory, existing.category, id);
     addToIndex(byCategory, patch.category, id);
@@ -92,6 +97,10 @@ function update(id, patch) {
   if (patch.type && patch.type !== existing.type) {
     removeFromIndex(byType, existing.type, id);
     addToIndex(byType, patch.type, id);
+  }
+  if (patch.brandId && patch.brandId !== existing.brandId) {
+    removeFromIndex(byBrand, existing.brandId, id);
+    addToIndex(byBrand, patch.brandId, id);
   }
 
   store.set(id, updated);
@@ -104,6 +113,7 @@ function remove(id) {
 
   removeFromIndex(byCategory, existing.category, id);
   removeFromIndex(byType, existing.type, id);
+  removeFromIndex(byBrand, existing.brandId, id);
   store.delete(id);
   return true;
 }
@@ -119,11 +129,14 @@ function search(filters = {}) {
     tags,
     page = 1,
     limit = 20,
+    brandId,
   } = filters;
 
   // Start with index-based candidate set when possible
   let candidates;
-  if (category && byCategory.has(category)) {
+  if (brandId && byBrand.has(brandId) && !category && !type) {
+    candidates = [...byBrand.get(brandId)].map(id => store.get(id)).filter(Boolean);
+  } else if (category && byCategory.has(category)) {
     candidates = [...byCategory.get(category)].map(id => store.get(id)).filter(Boolean);
   } else if (type && byType.has(type) && !category) {
     candidates = [...byType.get(type)].map(id => store.get(id)).filter(Boolean);
@@ -133,6 +146,7 @@ function search(filters = {}) {
 
   // Apply remaining filters linearly
   const filtered = candidates.filter(product => {
+    if (brandId && product.brandId !== brandId) return false;
     if (category && product.category !== category) return false;
     if (type && product.type !== type) return false;
     if (minPrice !== undefined && product.price < Number(minPrice)) return false;
@@ -164,6 +178,7 @@ function clear() {
   store.clear();
   byCategory.clear();
   byType.clear();
+  byBrand.clear();
 }
 
 module.exports = { create, findById, update, remove, search, clear };

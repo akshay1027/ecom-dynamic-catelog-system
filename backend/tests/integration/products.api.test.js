@@ -3,9 +3,16 @@
 const request = require('supertest');
 const app = require('../../src/app');
 const store = require('../../src/store/inMemoryStore');
+const brandStore = require('../../src/store/brandStore');
 
-beforeEach(() => {
+let defaultBrandId;
+
+beforeEach(async () => {
+  brandStore.clear();
   store.clear();
+  // Create a default brand for all tests
+  const brandRes = await request(app).post('/api/v1/brands').send({ name: 'Default Test Brand' });
+  defaultBrandId = brandRes.body.data.id;
 });
 
 // Helper to create a valid product via API
@@ -21,6 +28,7 @@ async function createProduct(overrides = {}) {
     images: [],
     tags: [],
     attributes: { size: 'M', color: 'blue' },
+    brandId: defaultBrandId,
   };
   const res = await request(app)
     .post('/api/v1/products')
@@ -176,10 +184,10 @@ describe('DELETE /api/v1/products/:id', () => {
 
 describe('GET /api/v1/products', () => {
   beforeEach(async () => {
-    await createProduct({ name: 'Red T-Shirt', price: 20, category: 'apparel', type: 'tshirt', stock: 10, attributes: { color: 'red', size: 'M' }, tags: ['sale', 'summer'] });
-    await createProduct({ name: 'Blue Jeans', price: 60, category: 'apparel', type: 'jeans', stock: 5, attributes: { color: 'blue', size: 'L' }, tags: ['summer'] });
-    await createProduct({ name: 'Oak Desk', price: 400, category: 'furniture', type: 'desk', stock: 2, attributes: { material: 'oak', color: 'brown' }, tags: [] });
-    await createProduct({ name: 'Gaming Laptop', price: 1200, category: 'electronics', type: 'laptop', stock: 3, attributes: { brand: 'Asus', ram: '32GB' }, tags: ['sale'] });
+    await createProduct({ name: 'Red T-Shirt', price: 20, category: 'apparel', type: 'tshirt', stock: 10, attributes: { color: 'red', size: 'M' }, tags: ['sale', 'summer'], brandId: defaultBrandId });
+    await createProduct({ name: 'Blue Jeans', price: 60, category: 'apparel', type: 'jeans', stock: 5, attributes: { color: 'blue', size: 'L' }, tags: ['summer'], brandId: defaultBrandId });
+    await createProduct({ name: 'Oak Desk', price: 400, category: 'furniture', type: 'desk', stock: 2, attributes: { material: 'oak', color: 'brown' }, tags: [], brandId: defaultBrandId });
+    await createProduct({ name: 'Gaming Laptop', price: 1200, category: 'electronics', type: 'laptop', stock: 3, attributes: { brand: 'Asus', ram: '32GB' }, tags: ['sale'], brandId: defaultBrandId });
   });
 
   test('returns all products with default pagination', async () => {
