@@ -38,17 +38,17 @@
 - [x] All ~32 tests green (59 total: 33 unit + 26 integration)
 
 ## Phase 3: Frontend (TDD)
-- [ ] ADR-003: Frontend architecture
-- [ ] ADR-004: State management
-- [ ] frontend/package.json + vite.config.js
-- [ ] npm install (frontend)
-- [ ] RED: ProductCard.test.jsx (6 tests)
-- [ ] RED: ProductList.test.jsx (5 tests)
-- [ ] RED: SearchFilter.test.jsx (6 tests)
-- [ ] RED: useProducts.test.js (6 tests)
-- [ ] GREEN: all components + hook
-- [ ] REFACTOR: formatPrice, AttributeBadge
-- [ ] All ~23 frontend tests green
+- [x] ADR-003: Frontend architecture
+- [x] ADR-004: State management
+- [x] frontend/package.json + vite.config.js
+- [x] npm install (frontend)
+- [x] RED: ProductCard.test.jsx (6 tests)
+- [x] RED: ProductList.test.jsx (5 tests)
+- [x] RED: SearchFilter.test.jsx (6 tests)
+- [x] RED: useProducts.test.js (6 tests)
+- [x] GREEN: all components + hook
+- [x] REFACTOR: formatPrice, AttributeBadge
+- [x] All ~23 frontend tests green
 
 ## Phase 4: Integration + Release
 - [ ] Update CORS (allow localhost:5173)
