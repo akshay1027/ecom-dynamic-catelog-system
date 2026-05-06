@@ -29,13 +29,13 @@
 - [x] All 20 unit tests green
 
 ## Phase 2: Backend API (TDD)
-- [ ] RED: products.api.test.js (~32 integration tests)
-- [ ] src/app.js
-- [ ] src/routes/products.js
-- [ ] src/middleware/validate.js
-- [ ] GREEN: all routes passing
-- [ ] REFACTOR: sendSuccess/sendError helpers
-- [ ] All ~32 tests green
+- [x] RED: products.api.test.js (~32 integration tests)
+- [x] src/app.js
+- [x] src/routes/products.js
+- [x] src/middleware/validate.js
+- [x] GREEN: all routes passing
+- [x] REFACTOR: sendSuccess/sendError helpers
+- [x] All ~32 tests green (59 total: 33 unit + 26 integration)
 
 ## Phase 3: Frontend (TDD)
 - [ ] ADR-003: Frontend architecture

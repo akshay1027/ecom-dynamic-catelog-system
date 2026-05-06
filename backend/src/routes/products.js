@@ -1,0 +1,83 @@
+'use strict';
+
+const router = require('express').Router();
+const store = require('../store/inMemoryStore');
+const { sanitizeProduct } = require('../models/product');
+const { validateCreate, validateUpdate, validateListQuery } = require('../middleware/validate');
+
+function sendSuccess(res, data, status = 200) {
+  return res.status(status).json({ success: true, data, error: null });
+}
+
+function sendError(res, code, message, status) {
+  return res.status(status).json({ success: false, data: null, error: { code, message } });
+}
+
+// POST /api/v1/products
+router.post('/', validateCreate, (req, res, next) => {
+  try {
+    const sanitized = sanitizeProduct(req.body);
+    const product = store.create(sanitized);
+    return sendSuccess(res, product, 201);
+  } catch (err) {
+    err.status = 400;
+    err.code = 'VALIDATION_ERROR';
+    return next(err);
+  }
+});
+
+// GET /api/v1/products — must be before /:id to avoid route conflict
+router.get('/', validateListQuery, (req, res) => {
+  const { name, category, type, minPrice, maxPrice, tags, page, limit } = req.query;
+  // req.query.attributes arrives as an object when bracket notation is used: ?attributes[color]=red
+  const attributes = req.query.attributes;
+
+  const filters = {};
+  if (name) filters.name = name;
+  if (category) filters.category = category;
+  if (type) filters.type = type;
+  if (minPrice !== undefined) filters.minPrice = Number(minPrice);
+  if (maxPrice !== undefined) filters.maxPrice = Number(maxPrice);
+  if (attributes && typeof attributes === 'object') filters.attributes = attributes;
+  if (tags) filters.tags = tags; // comma-separated string; store.search handles splitting
+  if (page) filters.page = Number(page);
+  if (limit) filters.limit = Number(limit);
+
+  const result = store.search(filters);
+  return sendSuccess(res, result);
+});
+
+// GET /api/v1/products/:id
+router.get('/:id', (req, res) => {
+  const product = store.findById(req.params.id);
+  if (!product) {
+    return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
+  }
+  return sendSuccess(res, product);
+});
+
+// PUT /api/v1/products/:id
+router.put('/:id', validateUpdate, (req, res, next) => {
+  try {
+    const updated = store.update(req.params.id, req.body);
+    if (!updated) {
+      return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
+    }
+    return sendSuccess(res, updated);
+  } catch (err) {
+    err.status = 400;
+    err.code = 'VALIDATION_ERROR';
+    return next(err);
+  }
+});
+
+// DELETE /api/v1/products/:id
+router.delete('/:id', (req, res) => {
+  const deleted = store.remove(req.params.id);
+  if (!deleted) {
+    return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
+  }
+  return sendSuccess(res, { id: req.params.id, deleted: true });
+});
+
+module.exports = router;
