@@ -4,7 +4,7 @@
 // Any field not in this set is stripped by sanitizeProduct() before it reaches the store.
 const ALLOWED_FIELDS = new Set([
   'name', 'description', 'price', 'currency', 'category', 'type',
-  'images', 'stock', 'tags', 'attributes',
+  'images', 'stock', 'tags', 'attributes', 'brandId', 'brandName',
 ]);
 
 function validateProduct(data) {
@@ -31,6 +31,9 @@ function validateProduct(data) {
   }
   if (data.stock === undefined || data.stock === null || Number(data.stock) < 0) {
     throw new Error('stock must be a non-negative number');
+  }
+  if (!data.brandId || typeof data.brandId !== 'string') {
+    throw new Error('brandId is required');
   }
   if (data.attributes && typeof data.attributes === 'object') {
     for (const [key, val] of Object.entries(data.attributes)) {

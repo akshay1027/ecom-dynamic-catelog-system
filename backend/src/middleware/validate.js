@@ -8,7 +8,7 @@ function makeError(message, code = 'VALIDATION_ERROR', status = 400) {
 }
 
 function validateCreate(req, res, next) {
-  const { name, price, currency, category, type, stock, attributes } = req.body;
+  const { name, price, currency, category, type, stock, attributes, brandId } = req.body;
 
   if (!name || typeof name !== 'string' || name.trim() === '') {
     return next(makeError('name is required'));
@@ -36,6 +36,9 @@ function validateCreate(req, res, next) {
   }
   if (Number(stock) < 0) {
     return next(makeError('stock must be non-negative'));
+  }
+  if (!brandId || typeof brandId !== 'string') {
+    return next(makeError('brandId is required'));
   }
   if (attributes && typeof attributes === 'object') {
     for (const [key, val] of Object.entries(attributes)) {

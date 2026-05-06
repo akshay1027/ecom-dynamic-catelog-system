@@ -16,6 +16,7 @@ describe('validateProduct()', () => {
     stock: 10,
     tags: ['summer'],
     attributes: { size: 'M', color: 'blue' },
+    brandId: 'test-brand-id',
   };
 
   test('passes a fully valid product without throwing', () => {
