@@ -7,14 +7,14 @@
 - [!] Blocked
 
 ## Phase 0: Workflow Bootstrap
-- [ ] git init
-- [ ] npx skills add
-- [ ] .claude/settings.json hooks
-- [ ] pre-commit hook (chmod +x)
-- [ ] docs structure
-- [ ] CLAUDE.md
-- [ ] GitHub repo creation
-- [ ] Initial commit + push
+- [x] git init
+- [x] npx skills add
+- [x] .claude/settings.json hooks
+- [x] pre-commit hook (chmod +x)
+- [x] docs structure
+- [x] CLAUDE.md
+- [x] GitHub repo creation
+- [x] Initial commit + push
 
 ## Phase 1: Data Layer + ADRs
 - [ ] ADR-001: Data model
