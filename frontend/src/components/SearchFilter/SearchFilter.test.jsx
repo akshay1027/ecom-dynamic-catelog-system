@@ -48,4 +48,10 @@ describe('SearchFilter', () => {
       expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ name: expect.stringContaining('shirt') }));
     });
   });
+
+  test('renders brand select when brands prop is provided', () => {
+    const brands = [{ id: '1', name: 'Nike' }, { id: '2', name: 'Adidas' }];
+    render(<SearchFilter onFiltersChange={() => {}} brands={brands} />);
+    expect(screen.getByLabelText(/brand/i)).toBeInTheDocument();
+  });
 });

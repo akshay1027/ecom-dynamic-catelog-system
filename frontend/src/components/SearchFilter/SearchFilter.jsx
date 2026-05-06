@@ -3,7 +3,7 @@ import './SearchFilter.css';
 
 const CATEGORIES = ['', 'apparel', 'furniture', 'electronics'];
 
-export default function SearchFilter({ onFiltersChange }) {
+export default function SearchFilter({ onFiltersChange, brands }) {
   const [filters, setFilters] = useState({});
 
   function update(patch) {
@@ -67,6 +67,22 @@ export default function SearchFilter({ onFiltersChange }) {
           onChange={e => update({ maxPrice: e.target.value })}
         />
       </div>
+      {brands && brands.length > 0 && (
+        <div className="search-filter__group">
+          <label htmlFor="brand-select" className="search-filter__label">Brand</label>
+          <select
+            id="brand-select"
+            className="search-filter__select"
+            value={filters.brandId || ''}
+            onChange={e => update({ brandId: e.target.value })}
+          >
+            <option value="">All brands</option>
+            {brands.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
       <button className="search-filter__reset" onClick={handleReset}>Reset</button>
     </div>
   );

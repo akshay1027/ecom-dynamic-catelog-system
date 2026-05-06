@@ -1,4 +1,5 @@
 const BASE = '/api/v1/products';
+const BRANDS_BASE = '/api/v1/brands';
 
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, {
@@ -38,4 +39,8 @@ export const productsApi = {
   create: (data) => fetchJson(BASE, { method: 'POST', body: JSON.stringify(data) }),
   update: (id, patch) => fetchJson(`${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
   remove: (id) => fetchJson(`${BASE}/${id}`, { method: 'DELETE' }),
+};
+
+export const brandsApi = {
+  list: () => fetchJson(BRANDS_BASE),
 };

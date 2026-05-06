@@ -1,7 +1,7 @@
 import './ProductList.css';
 import ProductCard from '../ProductCard/ProductCard';
 
-export default function ProductList({ products, loading, error }) {
+export default function ProductList({ products, loading, error, onProductClick }) {
   if (loading) {
     return <div className="product-list__loading">Loading...</div>;
   }
@@ -14,7 +14,7 @@ export default function ProductList({ products, loading, error }) {
   return (
     <div className="product-list">
       {products.map(product => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} onClick={onProductClick} />
       ))}
     </div>
   );

@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, test, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, test, expect, vi } from 'vitest';
 import ProductCard from './ProductCard';
 
 const baseProduct = {
@@ -10,6 +10,7 @@ const baseProduct = {
   currency: 'USD',
   category: 'apparel',
   type: 'shirt',
+  brandName: 'TestBrand',
   images: ['https://example.com/shirt.jpg'],
   stock: 10,
   tags: ['summer'],
@@ -52,5 +53,27 @@ describe('ProductCard', () => {
     expect(screen.getByText(/size/i)).toBeInTheDocument();
     expect(screen.getByText(/color/i)).toBeInTheDocument();
     expect(screen.getByText(/material/i)).toBeInTheDocument();
+  });
+
+  test('renders brand name', () => {
+    render(<ProductCard product={{ ...baseProduct, brandName: 'Nike' }} onClick={() => {}} />);
+    expect(screen.getByText('Nike')).toBeInTheDocument();
+  });
+
+  test('renders in-stock badge when stock > 0', () => {
+    render(<ProductCard product={{ ...baseProduct, stock: 10 }} onClick={() => {}} />);
+    expect(screen.getByText(/in stock/i)).toBeInTheDocument();
+  });
+
+  test('renders out-of-stock badge when stock is 0', () => {
+    render(<ProductCard product={{ ...baseProduct, stock: 0 }} onClick={() => {}} />);
+    expect(screen.getByText(/out of stock/i)).toBeInTheDocument();
+  });
+
+  test('calls onClick when card is clicked', () => {
+    const handleClick = vi.fn();
+    render(<ProductCard product={baseProduct} onClick={handleClick} />);
+    fireEvent.click(screen.getByText('Blue Cotton Shirt'));
+    expect(handleClick).toHaveBeenCalledWith(baseProduct);
   });
 });
