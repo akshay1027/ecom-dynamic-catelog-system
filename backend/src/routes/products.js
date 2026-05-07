@@ -32,6 +32,13 @@ router.post('/', validateCreate, (req, res, next) => {
   }
 });
 
+// GET /api/v1/products/attributes/schema — must be before /:id to avoid route conflict
+router.get('/attributes/schema', (req, res) => {
+  const { category } = req.query;
+  const schema = store.getAttributeSchema(category || null);
+  return sendSuccess(res, schema);
+});
+
 // GET /api/v1/products — must be before /:id to avoid route conflict
 router.get('/', validateListQuery, (req, res) => {
   const { name, category, type, minPrice, maxPrice, tags, page, limit, brandId } = req.query;

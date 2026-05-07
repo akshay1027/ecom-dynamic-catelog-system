@@ -314,3 +314,80 @@ describe('GET /api/v1/products', () => {
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 });
+
+describe('GET /api/v1/products/attributes/schema', () => {
+  beforeEach(async () => {
+    // Create a brand first
+    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand', description: 'Test' });
+    const brandId = brandRes.body.data.id;
+
+    await request(app).post('/api/v1/products').send({
+      name: 'Laptop A', price: 999, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId,
+      attributes: { color: 'silver', ram_gb: 16, noise_cancelling: false }
+    });
+    await request(app).post('/api/v1/products').send({
+      name: 'Laptop B', price: 1199, currency: 'USD', category: 'electronics', type: 'laptop', stock: 3, brandId,
+      attributes: { color: 'black', ram_gb: 32, noise_cancelling: false }
+    });
+    await request(app).post('/api/v1/products').send({
+      name: 'T-shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 50, brandId,
+      attributes: { color: 'red', size: 'M' }
+    });
+  });
+
+  it('returns schema for given category', async () => {
+    const res = await request(app).get('/api/v1/products/attributes/schema?category=electronics');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.color).toEqual({ type: 'string', values: ['black', 'silver'] });
+    expect(res.body.data.ram_gb).toEqual({ type: 'number', min: 16, max: 32 });
+    expect(res.body.data.noise_cancelling).toEqual({ type: 'boolean' });
+  });
+
+  it('returns only attributes for the requested category', async () => {
+    const res = await request(app).get('/api/v1/products/attributes/schema?category=apparel');
+    expect(res.body.data).toHaveProperty('color');
+    expect(res.body.data).toHaveProperty('size');
+    expect(res.body.data).not.toHaveProperty('ram_gb');
+  });
+
+  it('returns empty object for category with no products', async () => {
+    const res = await request(app).get('/api/v1/products/attributes/schema?category=furniture');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({});
+  });
+
+  it('returns merged schema for all categories when no category param', async () => {
+    const res = await request(app).get('/api/v1/products/attributes/schema');
+    expect(res.body.data).toHaveProperty('color');
+    expect(res.body.data).toHaveProperty('ram_gb');
+    expect(res.body.data).toHaveProperty('size');
+  });
+});
+
+describe('attribute filter: multi-value OR via API', () => {
+  it('returns products matching any selected attribute value', async () => {
+    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand2', description: 'T' });
+    const brandId = brandRes.body.data.id;
+    await request(app).post('/api/v1/products').send({ name: 'Red Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'red' } });
+    await request(app).post('/api/v1/products').send({ name: 'Blue Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'blue' } });
+    await request(app).post('/api/v1/products').send({ name: 'Green Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'green' } });
+
+    const res = await request(app).get('/api/v1/products?attributes[color][]=red&attributes[color][]=blue');
+    expect(res.status).toBe(200);
+    expect(res.body.data.total).toBe(2);
+  });
+});
+
+describe('attribute filter: numeric range via API', () => {
+  it('returns products within ram_gb range', async () => {
+    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand3', description: 'T' });
+    const brandId = brandRes.body.data.id;
+    await request(app).post('/api/v1/products').send({ name: 'Low RAM', price: 500, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId, attributes: { ram_gb: 8 } });
+    await request(app).post('/api/v1/products').send({ name: 'High RAM', price: 1500, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId, attributes: { ram_gb: 32 } });
+
+    const res = await request(app).get('/api/v1/products?attributes[ram_gb][min]=16');
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.every(p => p.name !== 'Low RAM')).toBe(true);
+  });
+});

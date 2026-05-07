@@ -26,7 +26,17 @@ function buildQuery(filters) {
   });
   if (attributes && typeof attributes === 'object') {
     Object.entries(attributes).forEach(([key, val]) => {
-      params.set(`attributes[${key}]`, val);
+      if (val === undefined || val === null) return;
+      if (Array.isArray(val) && val.length > 0) {
+        val.forEach(v => params.append(`attributes[${key}][]`, v));
+      } else if (typeof val === 'object' && (val.min !== undefined || val.max !== undefined)) {
+        if (val.min !== undefined && val.min !== '') params.set(`attributes[${key}][min]`, val.min);
+        if (val.max !== undefined && val.max !== '') params.set(`attributes[${key}][max]`, val.max);
+      } else if (typeof val === 'boolean') {
+        params.set(`attributes[${key}]`, val);
+      } else if (typeof val !== 'object' && val !== '') {
+        params.set(`attributes[${key}]`, val);
+      }
     });
   }
   const qs = params.toString();
@@ -39,6 +49,12 @@ export const productsApi = {
   create: (data) => fetchJson(BASE, { method: 'POST', body: JSON.stringify(data) }),
   update: (id, patch) => fetchJson(`${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
   remove: (id) => fetchJson(`${BASE}/${id}`, { method: 'DELETE' }),
+  getAttributeSchema: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.category) params.set('category', filters.category);
+    const qs = params.toString();
+    return fetchJson(qs ? `${BASE}/attributes/schema?${qs}` : `${BASE}/attributes/schema`);
+  },
 };
 
 export const brandsApi = {

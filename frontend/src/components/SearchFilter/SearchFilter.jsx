@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import AttributeFilters from '../AttributeFilters/AttributeFilters';
 import './SearchFilter.css';
 
 const CATEGORIES = ['', 'apparel', 'furniture', 'electronics'];
 
-export default function SearchFilter({ onFiltersChange, brands, onClose }) {
+export default function SearchFilter({ onFiltersChange, brands, onClose, attributeSchema = {} }) {
   const [filters, setFilters] = useState({});
 
   function update(patch) {
@@ -12,6 +13,15 @@ export default function SearchFilter({ onFiltersChange, brands, onClose }) {
     Object.keys(next).forEach(k => {
       if (next[k] === '' || next[k] === undefined) delete next[k];
     });
+    setFilters(next);
+    onFiltersChange(next);
+  }
+
+  function handleCategoryChange(category) {
+    const next = { ...filters, category };
+    // Reset attribute filters when category changes
+    delete next.attributes;
+    if (next.category === '') delete next.category;
     setFilters(next);
     onFiltersChange(next);
   }
@@ -50,7 +60,7 @@ export default function SearchFilter({ onFiltersChange, brands, onClose }) {
           className="search-filter__select"
           id="category-select"
           value={filters.category || ''}
-          onChange={e => update({ category: e.target.value })}
+          onChange={e => handleCategoryChange(e.target.value)}
         >
           {CATEGORIES.map(c => (
             <option key={c} value={c}>{c === '' ? 'All categories' : c}</option>
@@ -94,6 +104,17 @@ export default function SearchFilter({ onFiltersChange, brands, onClose }) {
             ))}
           </select>
         </div>
+      )}
+      {Object.keys(attributeSchema).length > 0 && (
+        <AttributeFilters
+          schema={attributeSchema}
+          value={filters.attributes || {}}
+          onChange={attrs => {
+            const next = { ...filters, attributes: attrs };
+            setFilters(next);
+            onFiltersChange(next);
+          }}
+        />
       )}
       <button className="search-filter__reset" onClick={handleReset}>Reset</button>
     </div>

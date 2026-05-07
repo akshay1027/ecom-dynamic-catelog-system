@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useProducts, useBrands } from '../hooks/useProducts';
+import { useProducts, useBrands, useAttributeSchema } from '../hooks/useProducts';
 import ProductList from '../components/ProductList/ProductList';
 import SearchFilter from '../components/SearchFilter/SearchFilter';
 import ProductDetail from '../components/ProductDetail/ProductDetail';
@@ -11,6 +11,7 @@ export default function CatalogPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { items, total, loading, error } = useProducts(filters);
   const { brands } = useBrands();
+  const { schema: attributeSchema } = useAttributeSchema({ category: filters.category });
 
   return (
     <div className="catalog-layout">
@@ -25,6 +26,7 @@ export default function CatalogPage() {
           onFiltersChange={setFilters}
           brands={brands}
           onClose={() => setDrawerOpen(false)}
+          attributeSchema={attributeSchema}
         />
       </aside>
 
