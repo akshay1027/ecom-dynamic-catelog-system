@@ -3,7 +3,7 @@ import './ProductDetail.css';
 export default function ProductDetail({ product, onClose }) {
   const {
     name, brandName, description, price, currency, category, type,
-    images, stock, tags, attributes,
+    images, stock, tags, attributes, variants,
   } = product;
 
   return (
@@ -32,6 +32,24 @@ export default function ProductDetail({ product, onClose }) {
             <div>
               <div className="product-detail__section-title">Description</div>
               <p className="product-detail__description">{description}</p>
+            </div>
+          )}
+
+          {variants && variants.length > 0 && (
+            <div>
+              <div className="product-detail__section-title">Available Sizes</div>
+              <div className="product-detail__variants">
+                {variants.map(v => (
+                  <span
+                    key={v.id}
+                    className={`variant-pill${v.stock === 0 ? ' variant-pill--oos' : ''}`}
+                  >
+                    {v.options.size}
+                    {v.stock === 0 && <span className="variant-pill__oos-label"> (Out of stock)</span>}
+                    {v.stock > 0 && <span className="variant-pill__stock">{v.stock} left</span>}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

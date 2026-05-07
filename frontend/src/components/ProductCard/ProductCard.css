@@ -106,3 +106,22 @@
   font-size: 12px;
   font-weight: 500;
 }
+
+.product-card__variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.size-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-weight: 500;
+}
+.size-chip--oos {
+  opacity: 0.4;
+  text-decoration: line-through;
+}

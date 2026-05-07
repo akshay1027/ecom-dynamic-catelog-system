@@ -17,13 +17,14 @@ function addToIndex(indexMap, key, id) {
   indexMap.get(key).add(id);
 }
 
-function updateRegistry(category, attributes) {
+function updateRegistry(category, attributes, isVariantDimension = false) {
   if (!attributes || typeof attributes !== 'object') return;
   if (!attributeRegistry.has(category)) attributeRegistry.set(category, {});
   const catReg = attributeRegistry.get(category);
   for (const [key, val] of Object.entries(attributes)) {
-    if (!catReg[key]) catReg[key] = { type: null, values: new Set(), min: Infinity, max: -Infinity };
+    if (!catReg[key]) catReg[key] = { type: null, values: new Set(), min: Infinity, max: -Infinity, isVariantDimension: false };
     const entry = catReg[key];
+    if (isVariantDimension) entry.isVariantDimension = true;
     if (typeof val === 'boolean') {
       if (entry.type === null) entry.type = 'boolean';
     } else if (typeof val === 'number') {
@@ -42,12 +43,14 @@ function mergeAllCategories() {
   for (const catSchema of attributeRegistry.values()) {
     for (const [key, entry] of Object.entries(catSchema)) {
       if (!merged[key]) {
-        merged[key] = { type: entry.type, values: new Set(entry.values), min: entry.min, max: entry.max };
+        merged[key] = { type: entry.type, values: new Set(entry.values), min: entry.min, max: entry.max, isVariantDimension: entry.isVariantDimension || false };
       } else {
         if (entry.type === 'string') merged[key].type = 'string';
         entry.values.forEach(v => merged[key].values.add(v));
         if (typeof entry.min === 'number') merged[key].min = Math.min(merged[key].min, entry.min);
         if (typeof entry.max === 'number') merged[key].max = Math.max(merged[key].max, entry.max);
+        // OR logic: if any category marks this as a variant dimension, it is one
+        if (entry.isVariantDimension) merged[key].isVariantDimension = true;
       }
     }
   }
@@ -58,11 +61,11 @@ function serializeSchema(schema) {
   const result = {};
   for (const [key, entry] of Object.entries(schema)) {
     if (entry.type === 'boolean') {
-      result[key] = { type: 'boolean' };
+      result[key] = { type: 'boolean', isVariantDimension: entry.isVariantDimension || false };
     } else if (entry.type === 'number') {
-      result[key] = { type: 'number', min: entry.min === Infinity ? 0 : entry.min, max: entry.max === -Infinity ? 0 : entry.max };
+      result[key] = { type: 'number', min: entry.min === Infinity ? 0 : entry.min, max: entry.max === -Infinity ? 0 : entry.max, isVariantDimension: entry.isVariantDimension || false };
     } else if (entry.type === 'string') {
-      result[key] = { type: 'string', values: [...entry.values].sort() };
+      result[key] = { type: 'string', values: [...entry.values].sort(), isVariantDimension: entry.isVariantDimension || false };
     }
   }
   return result;
@@ -99,6 +102,19 @@ function create(data) {
   if (!data.brandId) throw new Error('brandId is required');
 
   const now = new Date().toISOString();
+
+  // If variants are provided, compute stock as sum of variant stocks
+  const inputVariants = Array.isArray(data.variants) ? data.variants : [];
+  // Assign IDs to any variants that lack one
+  const variants = inputVariants.map(v => ({
+    id: v.id || crypto.randomUUID(),
+    options: v.options || {},
+    stock: typeof v.stock === 'number' ? v.stock : 0,
+  }));
+  const computedStock = variants.length > 0
+    ? variants.reduce((sum, v) => sum + v.stock, 0)
+    : Math.floor(Number(data.stock));
+
   const product = {
     id: uuidv4(),
     name: data.name.trim(),
@@ -108,9 +124,10 @@ function create(data) {
     category: data.category,
     type: data.type,
     images: data.images || [],
-    stock: Math.floor(Number(data.stock)),
+    stock: computedStock,
     tags: data.tags || [],
     attributes: data.attributes || {},
+    variants,
     brandId: data.brandId || '',
     brandName: data.brandName || '',
     createdAt: now,
@@ -121,7 +138,10 @@ function create(data) {
   addToIndex(byCategory, product.category, product.id);
   addToIndex(byType, product.type, product.id);
   addToIndex(byBrand, product.brandId, product.id);
-  updateRegistry(product.category, product.attributes);
+  updateRegistry(product.category, product.attributes, false);
+  for (const v of product.variants) {
+    updateRegistry(product.category, v.options, true);
+  }
 
   return { ...product };
 }
@@ -167,7 +187,10 @@ function update(id, patch) {
   }
 
   store.set(id, updated);
-  updateRegistry(updated.category, updated.attributes);
+  updateRegistry(updated.category, updated.attributes, false);
+  for (const v of (updated.variants || [])) {
+    updateRegistry(updated.category, v.options, true);
+  }
   return { ...updated };
 }
 
@@ -218,21 +241,36 @@ function search(filters = {}) {
     if (name && !product.name.toLowerCase().includes(name.toLowerCase())) return false;
     if (attrFilters && typeof attrFilters === 'object') {
       for (const [key, val] of Object.entries(attrFilters)) {
-        const productVal = product.attributes[key];
-        if (productVal == null) return false;
+        const catReg = attributeRegistry.get(product.category) || {};
+        const isVariantDim = catReg[key]?.isVariantDimension || false;
 
-        if (Array.isArray(val)) {
-          if (val.length === 0) continue; // empty array = no filter
-          if (!val.map(String).includes(String(productVal))) return false;
-        } else if (val !== null && typeof val === 'object') {
-          // Numeric range: { min?, max? }
-          const numVal = Number(productVal);
-          if (isNaN(numVal)) return false;
-          if (val.min !== undefined && val.min !== '' && numVal < Number(val.min)) return false;
-          if (val.max !== undefined && val.max !== '' && numVal > Number(val.max)) return false;
+        if (isVariantDim) {
+          if (Array.isArray(val) && val.length === 0) continue; // no filter = pass
+          const matchingVariants = (product.variants || []).filter(v => {
+            const vVal = v.options[key];
+            if (vVal == null) return false;
+            if (Array.isArray(val)) {
+              return val.map(String).includes(String(vVal));
+            }
+            return String(vVal) === String(val);
+          }).filter(v => v.stock > 0);
+          if (matchingVariants.length === 0) return false;
         } else {
-          // Exact match (backward-compatible)
-          if (String(productVal) !== String(val)) return false;
+          const productVal = product.attributes[key];
+          if (productVal == null) return false;
+          if (Array.isArray(val)) {
+            if (val.length === 0) continue; // empty array = no filter
+            if (!val.map(String).includes(String(productVal))) return false;
+          } else if (val !== null && typeof val === 'object') {
+            // Numeric range: { min?, max? }
+            const numVal = Number(productVal);
+            if (isNaN(numVal)) return false;
+            if (val.min !== undefined && val.min !== '' && numVal < Number(val.min)) return false;
+            if (val.max !== undefined && val.max !== '' && numVal > Number(val.max)) return false;
+          } else {
+            // Exact match (backward-compatible)
+            if (String(productVal) !== String(val)) return false;
+          }
         }
       }
     }
@@ -252,6 +290,51 @@ function search(filters = {}) {
   return { items, total, page: pageNum, limit: limitNum };
 }
 
+function recomputeStockFromVariants(product) {
+  product.stock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+  product.updatedAt = new Date().toISOString();
+}
+
+function addVariant(productId, variantData) {
+  const product = store.get(productId);
+  if (!product) return null;
+
+  const variant = {
+    id: crypto.randomUUID(),
+    options: variantData.options || {},
+    stock: typeof variantData.stock === 'number' ? variantData.stock : 0,
+  };
+  product.variants.push(variant);
+  recomputeStockFromVariants(product);
+  store.set(productId, product);
+  updateRegistry(product.category, variant.options, true);
+  return { ...product };
+}
+
+function updateVariant(productId, variantId, patch) {
+  const product = store.get(productId);
+  if (!product) return null;
+
+  const variantIndex = product.variants.findIndex(v => v.id === variantId);
+  if (variantIndex === -1) return null;
+
+  product.variants[variantIndex] = { ...product.variants[variantIndex], ...patch, id: variantId };
+  recomputeStockFromVariants(product);
+  store.set(productId, product);
+  updateRegistry(product.category, product.variants[variantIndex].options, true);
+  return { ...product };
+}
+
+function removeVariant(productId, variantId) {
+  const product = store.get(productId);
+  if (!product) return null;
+
+  product.variants = product.variants.filter(v => v.id !== variantId);
+  recomputeStockFromVariants(product);
+  store.set(productId, product);
+  return { ...product };
+}
+
 function clear() {
   store.clear();
   byCategory.clear();
@@ -260,4 +343,4 @@ function clear() {
   attributeRegistry.clear();
 }
 
-module.exports = { create, findById, update, remove, search, clear, getAttributeSchema };
+module.exports = { create, findById, update, remove, search, clear, getAttributeSchema, addVariant, updateVariant, removeVariant };

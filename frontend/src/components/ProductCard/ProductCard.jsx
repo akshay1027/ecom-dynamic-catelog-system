@@ -9,7 +9,7 @@ function AttributeBadge({ label, value }) {
 }
 
 export default function ProductCard({ product, onClick }) {
-  const { name, brandName, description, price, currency, category, type, images, stock, attributes } = product;
+  const { name, brandName, description, price, currency, category, type, images, stock, attributes, variants } = product;
   const attributeEntries = Object.entries(attributes || {}).slice(0, 3);
 
   return (
@@ -35,6 +35,19 @@ export default function ProductCard({ product, onClick }) {
           <div className="product-card__attributes">
             {attributeEntries.map(([key, val]) => (
               <AttributeBadge key={key} label={key} value={val} />
+            ))}
+          </div>
+        )}
+        {variants && variants.length > 0 && (
+          <div className="product-card__variants">
+            {variants.map(v => (
+              <span
+                key={v.id}
+                className={`size-chip${v.stock === 0 ? ' size-chip--oos' : ''}`}
+                title={v.stock === 0 ? 'Out of stock' : `${v.stock} in stock`}
+              >
+                {v.options.size}
+              </span>
             ))}
           </div>
         )}

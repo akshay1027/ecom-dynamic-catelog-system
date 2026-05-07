@@ -220,20 +220,20 @@ describe('attributeRegistry', () => {
     store.create({ name: 'A', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'red' } });
     store.create({ name: 'B', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'blue' } });
     const schema = store.getAttributeSchema('apparel');
-    expect(schema.color).toEqual({ type: 'string', values: ['blue', 'red'] }); // sorted
+    expect(schema.color).toEqual({ type: 'string', values: ['blue', 'red'], isVariantDimension: false }); // sorted
   });
 
   it('derives type: number with min and max', () => {
     store.create({ name: 'A', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 8 } });
     store.create({ name: 'B', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 32 } });
     const schema = store.getAttributeSchema('electronics');
-    expect(schema.ram_gb).toEqual({ type: 'number', min: 8, max: 32 });
+    expect(schema.ram_gb).toEqual({ type: 'number', min: 8, max: 32, isVariantDimension: false });
   });
 
   it('derives type: boolean', () => {
     store.create({ name: 'A', price: 10, currency: 'USD', category: 'apparel', type: 'jacket', stock: 1, brandId: 'b1', attributes: { waterproof: true } });
     const schema = store.getAttributeSchema('apparel');
-    expect(schema.waterproof).toEqual({ type: 'boolean' });
+    expect(schema.waterproof).toEqual({ type: 'boolean', isVariantDimension: false });
   });
 
   it('returns null category schema after clear()', () => {
@@ -247,6 +247,27 @@ describe('attributeRegistry', () => {
     store.update(p.id, { attributes: { color: 'green' } });
     const schema = store.getAttributeSchema('apparel');
     expect(schema.color.values).toContain('green');
+  });
+});
+
+describe('registry: isVariantDimension', () => {
+  it('marks attribute as isVariantDimension true when set via variant options', () => {
+    store.create({ name: 'Tee', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0, brandId: 'b1',
+      attributes: { color: 'white' },
+      variants: [{ options: { size: 'M' }, stock: 20 }]
+    });
+    const schema = store.getAttributeSchema('apparel');
+    expect(schema.size.isVariantDimension).toBe(true);
+    expect(schema.color.isVariantDimension).toBe(false);
+  });
+
+  it('scalar attribute not from variants has isVariantDimension false', () => {
+    store.create({ name: 'Laptop', price: 999, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId: 'b1',
+      attributes: { ram_gb: 16 },
+      variants: []
+    });
+    const schema = store.getAttributeSchema('electronics');
+    expect(schema.ram_gb.isVariantDimension).toBe(false);
   });
 });
 
@@ -294,6 +315,103 @@ describe('search: attribute numeric range', () => {
     store.create({ name: 'TextAttr', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 'na' } });
     const result = store.search({ attributes: { ram_gb: { min: 8 } } });
     expect(result.items.every(p => p.name !== 'TextAttr')).toBe(true);
+  });
+});
+
+describe('search: variant dimension filtering', () => {
+  beforeEach(() => {
+    store.create({ name: 'Tee', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0, brandId: 'b1',
+      attributes: { color: 'white' },
+      variants: [
+        { options: { size: 'S' }, stock: 25 },
+        { options: { size: 'M' }, stock: 0 },  // out of stock
+        { options: { size: 'L' }, stock: 30 },
+      ]
+    });
+    store.create({ name: 'Hoodie', price: 59, currency: 'USD', category: 'apparel', type: 'hoodie', stock: 0, brandId: 'b1',
+      attributes: { color: 'grey' },
+      variants: [
+        { options: { size: 'M' }, stock: 10 },
+        { options: { size: 'L' }, stock: 15 },
+      ]
+    });
+  });
+
+  it('returns product when in-stock variant matches size filter', () => {
+    const result = store.search({ attributes: { size: 'M' } });
+    expect(result.total).toBe(1);
+    expect(result.items[0].name).toBe('Hoodie');  // Tee's M is out of stock
+  });
+
+  it('excludes product when matching variant has stock = 0', () => {
+    const result = store.search({ attributes: { size: 'M' } });
+    expect(result.items.every(p => p.name !== 'Tee')).toBe(true);
+  });
+
+  it('returns product matching any size in OR filter', () => {
+    const result = store.search({ attributes: { size: ['S', 'L'] } });
+    // Tee has in-stock S and L; Hoodie has in-stock L
+    expect(result.total).toBe(2);
+  });
+
+  it('excludes product when no in-stock variant matches OR filter', () => {
+    const result = store.search({ attributes: { size: ['M'] } });
+    expect(result.total).toBe(1);
+    expect(result.items[0].name).toBe('Hoodie');
+  });
+
+  it('treats empty array filter as no-op for variant dimension', () => {
+    const result = store.search({ attributes: { size: [] } });
+    expect(result.total).toBe(2);
+  });
+
+  it('products without variants pass through variant dimension filter check', () => {
+    store.create({ name: 'Laptop', price: 999, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId: 'b1',
+      attributes: { ram_gb: 16 }, variants: []
+    });
+    // size is only isVariantDimension for apparel; filter by size should not affect electronics
+    const result = store.search({ category: 'electronics', attributes: { ram_gb: { min: 8 } } });
+    expect(result.total).toBe(1);
+  });
+});
+
+describe('variant CRUD', () => {
+  let productId;
+  beforeEach(() => {
+    const p = store.create({ name: 'Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0, brandId: 'b1',
+      attributes: { color: 'white' }, variants: [{ options: { size: 'M' }, stock: 20 }]
+    });
+    productId = p.id;
+  });
+
+  it('addVariant: appends variant and recomputes product stock', () => {
+    const result = store.addVariant(productId, { options: { size: 'L' }, stock: 15 });
+    expect(result.variants).toHaveLength(2);
+    expect(result.stock).toBe(35); // 20 + 15
+  });
+
+  it('addVariant: returns null for non-existent product', () => {
+    expect(store.addVariant('non-existent', { options: { size: 'M' }, stock: 5 })).toBeNull();
+  });
+
+  it('updateVariant: updates stock and recomputes product stock', () => {
+    const p = store.findById(productId);
+    const variantId = p.variants[0].id;
+    const result = store.updateVariant(productId, variantId, { stock: 50 });
+    expect(result.variants[0].stock).toBe(50);
+    expect(result.stock).toBe(50);
+  });
+
+  it('removeVariant: removes variant and recomputes product stock', () => {
+    const p = store.findById(productId);
+    const variantId = p.variants[0].id;
+    const result = store.removeVariant(productId, variantId);
+    expect(result.variants).toHaveLength(0);
+    expect(result.stock).toBe(0);
+  });
+
+  it('removeVariant: returns null for non-existent product', () => {
+    expect(store.removeVariant('non-existent', 'vid')).toBeNull();
   });
 });
 

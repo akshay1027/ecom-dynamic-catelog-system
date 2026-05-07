@@ -4,7 +4,7 @@
 // Any field not in this set is stripped by sanitizeProduct() before it reaches the store.
 const ALLOWED_FIELDS = new Set([
   'name', 'description', 'price', 'currency', 'category', 'type',
-  'images', 'stock', 'tags', 'attributes', 'brandId', 'brandName',
+  'images', 'stock', 'tags', 'attributes', 'brandId', 'brandName', 'variants',
 ]);
 
 function validateProduct(data) {
@@ -60,6 +60,7 @@ function sanitizeProduct(data) {
   if (sanitized.stock !== undefined) {
     sanitized.stock = Math.floor(Number(sanitized.stock));
   }
+  sanitized.variants = Array.isArray(sanitized.variants) ? sanitized.variants : [];
   return sanitized;
 }
 

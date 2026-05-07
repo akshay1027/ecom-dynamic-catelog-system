@@ -55,6 +55,12 @@ export const productsApi = {
     const qs = params.toString();
     return fetchJson(qs ? `${BASE}/attributes/schema?${qs}` : `${BASE}/attributes/schema`);
   },
+  addVariant: (productId, variantData) =>
+    fetchJson(`${BASE}/${productId}/variants`, { method: 'POST', body: JSON.stringify(variantData) }),
+  updateVariant: (productId, variantId, patch) =>
+    fetchJson(`${BASE}/${productId}/variants/${variantId}`, { method: 'PUT', body: JSON.stringify(patch) }),
+  removeVariant: (productId, variantId) =>
+    fetchJson(`${BASE}/${productId}/variants/${variantId}`, { method: 'DELETE' }),
 };
 
 export const brandsApi = {

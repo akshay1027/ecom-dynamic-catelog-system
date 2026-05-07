@@ -76,4 +76,35 @@ describe('ProductCard', () => {
     fireEvent.click(screen.getByText('Blue Cotton Shirt'));
     expect(handleClick).toHaveBeenCalledWith(baseProduct);
   });
+
+  test('renders size chips when product has variants', () => {
+    const product = {
+      ...baseProduct,
+      attributes: {},
+      variants: [
+        { id: 'v1', options: { size: 'S' }, stock: 20 },
+        { id: 'v2', options: { size: 'M' }, stock: 0 },
+      ],
+    };
+    render(<ProductCard product={product} onClick={vi.fn()} />);
+    expect(screen.getByText('S')).toBeTruthy();
+    expect(screen.getByText('M')).toBeTruthy();
+  });
+
+  test('does not render variant section when variants array is empty', () => {
+    const product = { ...baseProduct, variants: [], attributes: {} };
+    const { container } = render(<ProductCard product={product} onClick={vi.fn()} />);
+    expect(container.querySelector('.product-card__variants')).toBeNull();
+  });
+
+  test('applies size-chip--oos class to out-of-stock variant chips', () => {
+    const product = {
+      ...baseProduct,
+      attributes: {},
+      variants: [{ id: 'v1', options: { size: 'M' }, stock: 0 }],
+    };
+    render(<ProductCard product={product} onClick={vi.fn()} />);
+    const chip = screen.getByText('M').closest('span');
+    expect(chip.className).toContain('size-chip--oos');
+  });
 });
