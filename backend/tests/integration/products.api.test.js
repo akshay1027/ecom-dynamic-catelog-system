@@ -339,9 +339,9 @@ describe('GET /api/v1/products/attributes/schema', () => {
     const res = await request(app).get('/api/v1/products/attributes/schema?category=electronics');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.color).toEqual({ type: 'string', values: ['black', 'silver'] });
-    expect(res.body.data.ram_gb).toEqual({ type: 'number', min: 16, max: 32 });
-    expect(res.body.data.noise_cancelling).toEqual({ type: 'boolean' });
+    expect(res.body.data.color).toEqual({ type: 'string', values: ['black', 'silver'], isVariantDimension: false });
+    expect(res.body.data.ram_gb).toEqual({ type: 'number', min: 16, max: 32, isVariantDimension: false });
+    expect(res.body.data.noise_cancelling).toEqual({ type: 'boolean', isVariantDimension: false });
   });
 
   it('returns only attributes for the requested category', async () => {
@@ -376,6 +376,103 @@ describe('attribute filter: multi-value OR via API', () => {
     const res = await request(app).get('/api/v1/products?attributes[color][]=red&attributes[color][]=blue');
     expect(res.status).toBe(200);
     expect(res.body.data.total).toBe(2);
+  });
+});
+
+describe('variant CRUD endpoints', () => {
+  let brandId, productId;
+  beforeEach(async () => {
+    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand', description: 'Test' });
+    brandId = brandRes.body.data.id;
+    const prodRes = await request(app).post('/api/v1/products').send({
+      name: 'Test Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0, brandId,
+      attributes: { color: 'white' },
+      variants: [{ options: { size: 'M' }, stock: 20 }]
+    });
+    productId = prodRes.body.data.id;
+  });
+
+  it('POST /:id/variants adds a new variant and returns updated product', async () => {
+    const res = await request(app)
+      .post(`/api/v1/products/${productId}/variants`)
+      .send({ options: { size: 'L' }, stock: 15 });
+    expect(res.status).toBe(201);
+    expect(res.body.data.variants).toHaveLength(2);
+    expect(res.body.data.stock).toBe(35);
+  });
+
+  it('POST /:id/variants returns 404 for non-existent product', async () => {
+    const res = await request(app)
+      .post(`/api/v1/products/non-existent-id/variants`)
+      .send({ options: { size: 'L' }, stock: 5 });
+    expect(res.status).toBe(404);
+  });
+
+  it('POST /:id/variants returns 400 when options missing', async () => {
+    const res = await request(app)
+      .post(`/api/v1/products/${productId}/variants`)
+      .send({ stock: 5 });
+    expect(res.status).toBe(400);
+  });
+
+  it('PUT /:id/variants/:vid updates variant stock', async () => {
+    const product = (await request(app).get(`/api/v1/products/${productId}`)).body.data;
+    const variantId = product.variants[0].id;
+    const res = await request(app)
+      .put(`/api/v1/products/${productId}/variants/${variantId}`)
+      .send({ options: { size: 'M' }, stock: 50 });
+    expect(res.status).toBe(200);
+    expect(res.body.data.variants[0].stock).toBe(50);
+    expect(res.body.data.stock).toBe(50);
+  });
+
+  it('DELETE /:id/variants/:vid removes the variant', async () => {
+    const product = (await request(app).get(`/api/v1/products/${productId}`)).body.data;
+    const variantId = product.variants[0].id;
+    const res = await request(app)
+      .delete(`/api/v1/products/${productId}/variants/${variantId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.variants).toHaveLength(0);
+  });
+
+  it('product.stock reflects sum of variant stocks after changes', async () => {
+    await request(app)
+      .post(`/api/v1/products/${productId}/variants`)
+      .send({ options: { size: 'L' }, stock: 30 });
+    const res = await request(app).get(`/api/v1/products/${productId}`);
+    expect(res.body.data.stock).toBe(50); // 20 + 30
+  });
+});
+
+describe('attribute filter: variant dimension via API', () => {
+  let brandId;
+  beforeEach(async () => {
+    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TBrand', description: 'T' });
+    brandId = brandRes.body.data.id;
+    // Tee: M in-stock, L out-of-stock
+    await request(app).post('/api/v1/products').send({
+      name: 'Tee', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0, brandId,
+      attributes: { color: 'white' },
+      variants: [{ options: { size: 'M' }, stock: 20 }, { options: { size: 'L' }, stock: 0 }]
+    });
+    // Hoodie: L in-stock
+    await request(app).post('/api/v1/products').send({
+      name: 'Hoodie', price: 59, currency: 'USD', category: 'apparel', type: 'hoodie', stock: 0, brandId,
+      attributes: { color: 'grey' },
+      variants: [{ options: { size: 'L' }, stock: 15 }]
+    });
+  });
+
+  it('returns only products with in-stock variant matching size filter', async () => {
+    const res = await request(app).get('/api/v1/products?attributes[size][]=L');
+    expect(res.status).toBe(200);
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].name).toBe('Hoodie');
+  });
+
+  it('returns union of products for OR size filter', async () => {
+    const res = await request(app).get('/api/v1/products?attributes[size][]=M&attributes[size][]=L');
+    expect(res.body.data.items).toHaveLength(2);
   });
 });
 

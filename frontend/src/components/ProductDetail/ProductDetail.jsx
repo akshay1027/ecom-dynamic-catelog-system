@@ -3,7 +3,7 @@ import './ProductDetail.css';
 export default function ProductDetail({ product, onClose }) {
   const {
     name, brandName, description, price, currency, category, type,
-    images, stock, tags, attributes,
+    images, stock, tags, attributes, variants,
   } = product;
 
   return (
@@ -35,6 +35,24 @@ export default function ProductDetail({ product, onClose }) {
             </div>
           )}
 
+          {variants && variants.length > 0 && (
+            <div>
+              <div className="product-detail__section-title">Available Sizes</div>
+              <div className="product-detail__variants">
+                {variants.map(v => (
+                  <span
+                    key={v.id}
+                    className={`variant-pill${v.stock === 0 ? ' variant-pill--oos' : ''}`}
+                  >
+                    {v.options.size}
+                    {v.stock === 0 && <span className="variant-pill__oos-label"> (Out of stock)</span>}
+                    {v.stock > 0 && <span className="variant-pill__stock">{v.stock} left</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {attributes && Object.keys(attributes).length > 0 && (
             <div>
               <div className="product-detail__section-title">Specifications</div>
@@ -42,7 +60,7 @@ export default function ProductDetail({ product, onClose }) {
                 {Object.entries(attributes).map(([key, val]) => (
                   <div key={key} className="product-detail__attribute-row">
                     <span className="product-detail__attribute-key">{key.replace(/_/g, ' ')}</span>
-                    <span className="product-detail__attribute-val">{String(val)}</span>
+                    <span className="product-detail__attribute-val">{val === true ? 'Yes' : val === false ? 'No' : String(val)}</span>
                   </div>
                 ))}
               </div>

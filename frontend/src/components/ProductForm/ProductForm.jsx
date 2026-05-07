@@ -15,6 +15,9 @@ function buildInitialState(product) {
     attributes: product?.attributes
       ? Object.entries(product.attributes).map(([key, value]) => ({ key, value: String(value) }))
       : [],
+    variants: product?.variants
+      ? product.variants.map(v => ({ id: v.id, size: v.options?.size || '', stock: String(v.stock) }))
+      : [],
   };
 }
 
@@ -44,6 +47,25 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
     }));
   }
 
+  function addVariantRow() {
+    setFields(prev => ({ ...prev, variants: [...prev.variants, { id: null, size: '', stock: '0' }] }));
+  }
+
+  function updateVariantRow(index, key, value) {
+    setFields(prev => {
+      const next = [...prev.variants];
+      next[index] = { ...next[index], [key]: value };
+      return { ...prev, variants: next };
+    });
+  }
+
+  function removeVariantRow(index) {
+    setFields(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index),
+    }));
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     const formData = {
@@ -64,6 +86,9 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
           .filter(a => a.key.trim() !== '')
           .map(a => [a.key.trim(), a.value])
       ),
+      variants: fields.variants
+        .filter(v => v.size.trim() !== '')
+        .map(v => ({ options: { size: v.size.trim() }, stock: parseInt(v.stock, 10) || 0 })),
     };
     onSave(formData);
   }
@@ -208,6 +233,33 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
           ))}
           <button type="button" className="btn-add-attr" onClick={addAttribute}>
             + Add Attribute
+          </button>
+
+          <div className="form-section-title">Variants (Sizes)</div>
+          {fields.variants.map((v, i) => (
+            <div key={i} className="variant-row">
+              <input
+                type="text"
+                placeholder="Size (e.g. M)"
+                aria-label={`variant ${i} size`}
+                value={v.size}
+                onChange={e => updateVariantRow(i, 'size', e.target.value)}
+              />
+              <input
+                type="number"
+                min="0"
+                placeholder="Stock"
+                aria-label={`variant ${i} stock`}
+                value={v.stock}
+                onChange={e => updateVariantRow(i, 'stock', e.target.value)}
+              />
+              <button type="button" className="btn-remove-attr" aria-label={`remove variant ${i}`} onClick={() => removeVariantRow(i)}>
+                &times;
+              </button>
+            </div>
+          ))}
+          <button type="button" className="btn-add-attr" onClick={addVariantRow}>
+            + Add Size
           </button>
 
           <div className="form-actions">

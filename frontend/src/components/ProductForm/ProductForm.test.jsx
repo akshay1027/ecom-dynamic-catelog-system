@@ -40,3 +40,81 @@ describe('ProductForm', () => {
     expect(screen.getByLabelText(/price/i).value).toBe('50');
   });
 });
+
+describe('ProductForm variants section', () => {
+  const brandsList = [{ id: 'b1', name: 'TestBrand' }];
+  const productWithVariants = {
+    id: 'p1',
+    name: 'Test Shirt',
+    price: 29,
+    currency: 'USD',
+    category: 'apparel',
+    type: 'shirt',
+    stock: 0,
+    brandId: 'b1',
+    attributes: {},
+    tags: [],
+    variants: [
+      { id: 'v1', options: { size: 'M' }, stock: 20 },
+      { id: 'v2', options: { size: 'L' }, stock: 15 },
+    ],
+  };
+
+  it('renders existing variants in Variants section', () => {
+    render(<ProductForm product={productWithVariants} brands={brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByDisplayValue('M')).toBeTruthy();
+    expect(screen.getByDisplayValue('L')).toBeTruthy();
+    expect(screen.getByDisplayValue('20')).toBeTruthy();
+  });
+
+  it('Add Size button appends empty variant row', () => {
+    render(<ProductForm product={null} brands={brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('+ Add Size'));
+    const sizeInputs = screen.getAllByPlaceholderText('Size (e.g. M)');
+    expect(sizeInputs).toHaveLength(1);
+  });
+
+  it('updating size input reflects in state', () => {
+    render(<ProductForm product={null} brands={brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('+ Add Size'));
+    const sizeInput = screen.getByPlaceholderText('Size (e.g. M)');
+    fireEvent.change(sizeInput, { target: { value: 'XL' } });
+    expect(sizeInput.value).toBe('XL');
+  });
+
+  it('removing a variant row removes it from the form', () => {
+    render(<ProductForm product={productWithVariants} brands={brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+    const removeButtons = screen.getAllByRole('button', { name: /remove variant/i });
+    fireEvent.click(removeButtons[0]);
+    const sizeInputs = screen.getAllByDisplayValue(/[A-Z]/);
+    expect(sizeInputs.some(input => input.value === 'M')).toBe(false);
+  });
+
+  it('handleSubmit includes variants in onSave payload', async () => {
+    const onSave = vi.fn();
+    render(<ProductForm product={productWithVariants} brands={brandsList} onSave={onSave} onClose={vi.fn()} />);
+    fireEvent.submit(screen.getByRole('form'));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variants: expect.arrayContaining([
+          expect.objectContaining({ options: { size: 'M' }, stock: 20 }),
+        ]),
+      })
+    );
+  });
+
+  it('handleSubmit skips variant rows with empty size', async () => {
+    const onSave = vi.fn();
+    render(<ProductForm product={null} brands={brandsList} onSave={onSave} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('+ Add Size'));
+    // Fill required fields so submit fires onSave
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'New Product' } });
+    fireEvent.change(screen.getByLabelText(/price/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/category/i), { target: { value: 'apparel' } });
+    fireEvent.change(screen.getByLabelText('Stock'), { target: { value: '0' } });
+    fireEvent.submit(screen.getByRole('form'));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ variants: [] })
+    );
+  });
+});

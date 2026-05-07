@@ -167,3 +167,31 @@
   font-size: 12px;
   color: var(--color-primary-dark);
 }
+
+.product-detail__variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.variant-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-size: 13px;
+  font-weight: 500;
+}
+.variant-pill--oos {
+  opacity: 0.45;
+}
+.variant-pill__stock {
+  font-size: 11px;
+  opacity: 0.7;
+}
+.variant-pill__oos-label {
+  font-size: 11px;
+}

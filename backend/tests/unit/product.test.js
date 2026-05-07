@@ -92,4 +92,20 @@ describe('sanitizeProduct()', () => {
     expect(result.attributes).toEqual({});
     expect(result.description).toBe('');
   });
+
+  test('preserves variants array when provided', () => {
+    const variants = [{ options: { size: 'M' }, stock: 10 }];
+    const result = sanitizeProduct({
+      name: 'Shirt', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0,
+      variants,
+    });
+    expect(result.variants).toEqual(variants);
+  });
+
+  test('defaults variants to empty array when absent', () => {
+    const result = sanitizeProduct({
+      name: 'Shirt', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1,
+    });
+    expect(result.variants).toEqual([]);
+  });
 });

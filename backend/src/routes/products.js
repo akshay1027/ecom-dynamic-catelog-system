@@ -4,7 +4,7 @@ const router = require('express').Router();
 const store = require('../store/inMemoryStore');
 const brandStore = require('../store/brandStore');
 const { sanitizeProduct } = require('../models/product');
-const { validateCreate, validateUpdate, validateListQuery } = require('../middleware/validate');
+const { validateCreate, validateUpdate, validateListQuery, validateVariant } = require('../middleware/validate');
 
 function sendSuccess(res, data, status = 200) {
   return res.status(status).json({ success: true, data, error: null });
@@ -12,6 +12,13 @@ function sendSuccess(res, data, status = 200) {
 
 function sendError(res, code, message, status) {
   return res.status(status).json({ success: false, data: null, error: { code, message } });
+}
+
+function makeError(message, code = 'NOT_FOUND', status = 404) {
+  const err = new Error(message);
+  err.status = status;
+  err.code = code;
+  return err;
 }
 
 // POST /api/v1/products
@@ -59,6 +66,27 @@ router.get('/', validateListQuery, (req, res) => {
 
   const result = store.search(filters);
   return sendSuccess(res, result);
+});
+
+// POST /api/v1/products/:id/variants
+router.post('/:id/variants', validateVariant, (req, res, next) => {
+  const product = store.addVariant(req.params.id, req.body);
+  if (!product) return next(makeError('product not found', 'NOT_FOUND', 404));
+  return sendSuccess(res, product, 201);
+});
+
+// PUT /api/v1/products/:id/variants/:vid
+router.put('/:id/variants/:vid', validateVariant, (req, res, next) => {
+  const product = store.updateVariant(req.params.id, req.params.vid, req.body);
+  if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
+  return sendSuccess(res, product);
+});
+
+// DELETE /api/v1/products/:id/variants/:vid
+router.delete('/:id/variants/:vid', (req, res, next) => {
+  const product = store.removeVariant(req.params.id, req.params.vid);
+  if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
+  return sendSuccess(res, product);
 });
 
 // GET /api/v1/products/:id

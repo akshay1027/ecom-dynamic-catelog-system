@@ -62,4 +62,49 @@ describe('ProductDetail', () => {
     render(<ProductDetail product={{ ...product, images: [] }} onClose={() => {}} />);
     expect(screen.getByText(/no image/i)).toBeInTheDocument();
   });
+
+  test('renders Available Sizes section when product has variants', () => {
+    const productWithVariants = {
+      ...product,
+      attributes: { color: 'blue', material: 'cotton' },
+      variants: [{ id: 'v1', options: { size: 'XL' }, stock: 20 }],
+    };
+    render(<ProductDetail product={productWithVariants} onClose={vi.fn()} />);
+    expect(screen.getByText('Available Sizes')).toBeTruthy();
+    expect(screen.getByText('XL')).toBeTruthy();
+  });
+
+  test('renders each variant size option', () => {
+    const productWithVariants = {
+      ...product,
+      attributes: { color: 'blue', material: 'cotton' },
+      variants: [
+        { id: 'v1', options: { size: 'S' }, stock: 10 },
+        { id: 'v2', options: { size: 'XL' }, stock: 20 },
+      ],
+    };
+    render(<ProductDetail product={productWithVariants} onClose={vi.fn()} />);
+    expect(screen.getByText('S')).toBeTruthy();
+    expect(screen.getByText('XL')).toBeTruthy();
+  });
+
+  test('shows out-of-stock label for zero-stock variants', () => {
+    const productWithVariants = {
+      ...product,
+      variants: [{ id: 'v1', options: { size: 'M' }, stock: 0 }],
+    };
+    render(<ProductDetail product={productWithVariants} onClose={vi.fn()} />);
+    expect(screen.getByText(/out of stock/i)).toBeTruthy();
+  });
+
+  test('renders boolean true attribute as "Yes"', () => {
+    render(<ProductDetail product={{ ...product, attributes: { waterproof: true } }} onClose={() => {}} />);
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+  });
+
+  test('does not render variants section when variants is empty', () => {
+    const productNoVariants = { ...product, variants: [] };
+    const { container } = render(<ProductDetail product={productNoVariants} onClose={vi.fn()} />);
+    expect(container.querySelector('.product-detail__variants')).toBeNull();
+  });
 });

@@ -99,4 +99,15 @@ function validateListQuery(req, res, next) {
   next();
 }
 
-module.exports = { validateCreate, validateUpdate, validateListQuery };
+function validateVariant(req, res, next) {
+  const { options, stock } = req.body;
+  if (!options || typeof options !== 'object' || Array.isArray(options)) {
+    return next(makeError('options must be a non-null object'));
+  }
+  if (stock !== undefined && (typeof stock !== 'number' || stock < 0)) {
+    return next(makeError('stock must be a non-negative number'));
+  }
+  next();
+}
+
+module.exports = { validateCreate, validateUpdate, validateListQuery, validateVariant };

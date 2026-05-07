@@ -3,13 +3,13 @@ import './ProductCard.css';
 function AttributeBadge({ label, value }) {
   return (
     <span className="attribute-badge">
-      {label}: {value}
+      {label}: {value === true ? 'Yes' : value === false ? 'No' : value}
     </span>
   );
 }
 
 export default function ProductCard({ product, onClick }) {
-  const { name, brandName, description, price, currency, category, type, images, stock, attributes } = product;
+  const { name, brandName, description, price, currency, category, type, images, stock, attributes, variants } = product;
   const attributeEntries = Object.entries(attributes || {}).slice(0, 3);
 
   return (
@@ -34,7 +34,20 @@ export default function ProductCard({ product, onClick }) {
         {attributeEntries.length > 0 && (
           <div className="product-card__attributes">
             {attributeEntries.map(([key, val]) => (
-              <AttributeBadge key={key} label={key} value={val} />
+              <AttributeBadge key={key} label={key.replace(/_/g, ' ')} value={val} />
+            ))}
+          </div>
+        )}
+        {variants && variants.length > 0 && (
+          <div className="product-card__variants">
+            {variants.map(v => (
+              <span
+                key={v.id}
+                className={`size-chip${v.stock === 0 ? ' size-chip--oos' : ''}`}
+                title={v.stock === 0 ? 'Out of stock' : `${v.stock} in stock`}
+              >
+                {v.options.size}
+              </span>
             ))}
           </div>
         )}
