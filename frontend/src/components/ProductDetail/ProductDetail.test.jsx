@@ -63,14 +63,14 @@ describe('ProductDetail', () => {
     expect(screen.getByText(/no image/i)).toBeInTheDocument();
   });
 
-  test('renders Available Sizes section when product has variants', () => {
+  test('renders variant type title and value when product has variants', () => {
     const productWithVariants = {
       ...product,
       attributes: { color: 'blue', material: 'cotton' },
       variants: [{ id: 'v1', options: { size: 'XL' }, stock: 20 }],
     };
     render(<ProductDetail product={productWithVariants} onClose={vi.fn()} />);
-    expect(screen.getByText('Available Sizes')).toBeTruthy();
+    expect(screen.getByText('Size')).toBeTruthy();
     expect(screen.getByText('XL')).toBeTruthy();
   });
 
@@ -106,5 +106,34 @@ describe('ProductDetail', () => {
     const productNoVariants = { ...product, variants: [] };
     const { container } = render(<ProductDetail product={productNoVariants} onClose={vi.fn()} />);
     expect(container.querySelector('.product-detail__variants')).toBeNull();
+  });
+
+  test('renders separate section per variant type', () => {
+    const productWithMultiTypes = {
+      ...product,
+      variants: [
+        { id: 'v1', options: { size: 'M' }, stock: 20 },
+        { id: 'v2', options: { colour: 'black' }, stock: 30 },
+      ],
+    };
+    render(<ProductDetail product={productWithMultiTypes} onClose={vi.fn()} />);
+    expect(screen.getByText('Size')).toBeTruthy();
+    expect(screen.getByText('Colour')).toBeTruthy();
+  });
+
+  test('renders variant values under correct type section', () => {
+    const productWithMultiTypes = {
+      ...product,
+      attributes: {},
+      variants: [
+        { id: 'v1', options: { size: 'XL' }, stock: 20 },
+        { id: 'v2', options: { colour: 'black' }, stock: 30 },
+        { id: 'v3', options: { colour: 'white' }, stock: 15 },
+      ],
+    };
+    render(<ProductDetail product={productWithMultiTypes} onClose={vi.fn()} />);
+    expect(screen.getByText('XL')).toBeTruthy();
+    expect(screen.getByText('black')).toBeTruthy();
+    expect(screen.getByText('white')).toBeTruthy();
   });
 });

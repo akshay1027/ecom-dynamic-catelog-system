@@ -1,5 +1,15 @@
 import './ProductCard.css';
 
+function groupVariantsByKey(variants) {
+  return variants.reduce((acc, v) => {
+    for (const key of Object.keys(v.options)) {
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(v);
+    }
+    return acc;
+  }, {});
+}
+
 function AttributeBadge({ label, value }) {
   return (
     <span className="attribute-badge">
@@ -40,14 +50,18 @@ export default function ProductCard({ product, onClick }) {
         )}
         {variants && variants.length > 0 && (
           <div className="product-card__variants">
-            {variants.map(v => (
-              <span
-                key={v.id}
-                className={`size-chip${v.stock === 0 ? ' size-chip--oos' : ''}`}
-                title={v.stock === 0 ? 'Out of stock' : `${v.stock} in stock`}
-              >
-                {v.options.size}
-              </span>
+            {Object.entries(groupVariantsByKey(variants)).map(([key, group]) => (
+              <div key={key} className="product-card__variant-group">
+                {group.map(v => (
+                  <span
+                    key={v.id}
+                    className={`size-chip${v.stock === 0 ? ' size-chip--oos' : ''}`}
+                    title={v.stock === 0 ? 'Out of stock' : `${v.stock} in stock`}
+                  >
+                    {v.options[key]}
+                  </span>
+                ))}
+              </div>
             ))}
           </div>
         )}

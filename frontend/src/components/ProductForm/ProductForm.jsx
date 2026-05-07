@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import './ProductForm.css';
 
+function buildVariantTypes(variants = []) {
+  const typeMap = new Map();
+  for (const v of variants) {
+    for (const [key, val] of Object.entries(v.options || {})) {
+      if (!typeMap.has(key)) typeMap.set(key, []);
+      typeMap.get(key).push({ id: v.id, value: String(val), stock: String(v.stock) });
+    }
+  }
+  return [...typeMap.entries()].map(([key, values]) => ({ key, values }));
+}
+
 function buildInitialState(product) {
   return {
     name: product?.name ?? '',
@@ -15,9 +26,7 @@ function buildInitialState(product) {
     attributes: product?.attributes
       ? Object.entries(product.attributes).map(([key, value]) => ({ key, value: String(value) }))
       : [],
-    variants: product?.variants
-      ? product.variants.map(v => ({ id: v.id, size: v.options?.size || '', stock: String(v.stock) }))
-      : [],
+    variantTypes: buildVariantTypes(product?.variants),
   };
 }
 
@@ -47,23 +56,49 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
     }));
   }
 
-  function addVariantRow() {
-    setFields(prev => ({ ...prev, variants: [...prev.variants, { id: null, size: '', stock: '0' }] }));
+  function addVariantType() {
+    setFields(prev => ({ ...prev, variantTypes: [...prev.variantTypes, { key: '', values: [] }] }));
   }
 
-  function updateVariantRow(index, key, value) {
+  function updateVariantTypeKey(typeIdx, key) {
     setFields(prev => {
-      const next = [...prev.variants];
-      next[index] = { ...next[index], [key]: value };
-      return { ...prev, variants: next };
+      const next = [...prev.variantTypes];
+      next[typeIdx] = { ...next[typeIdx], key };
+      return { ...prev, variantTypes: next };
     });
   }
 
-  function removeVariantRow(index) {
+  function removeVariantType(typeIdx) {
     setFields(prev => ({
       ...prev,
-      variants: prev.variants.filter((_, i) => i !== index),
+      variantTypes: prev.variantTypes.filter((_, i) => i !== typeIdx),
     }));
+  }
+
+  function addVariantValue(typeIdx) {
+    setFields(prev => {
+      const next = [...prev.variantTypes];
+      next[typeIdx] = { ...next[typeIdx], values: [...next[typeIdx].values, { id: null, value: '', stock: '0' }] };
+      return { ...prev, variantTypes: next };
+    });
+  }
+
+  function updateVariantValue(typeIdx, valIdx, field, val) {
+    setFields(prev => {
+      const types = [...prev.variantTypes];
+      const values = [...types[typeIdx].values];
+      values[valIdx] = { ...values[valIdx], [field]: val };
+      types[typeIdx] = { ...types[typeIdx], values };
+      return { ...prev, variantTypes: types };
+    });
+  }
+
+  function removeVariantValue(typeIdx, valIdx) {
+    setFields(prev => {
+      const types = [...prev.variantTypes];
+      types[typeIdx] = { ...types[typeIdx], values: types[typeIdx].values.filter((_, i) => i !== valIdx) };
+      return { ...prev, variantTypes: types };
+    });
   }
 
   function handleSubmit(e) {
@@ -86,9 +121,16 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
           .filter(a => a.key.trim() !== '')
           .map(a => [a.key.trim(), a.value])
       ),
-      variants: fields.variants
-        .filter(v => v.size.trim() !== '')
-        .map(v => ({ options: { size: v.size.trim() }, stock: parseInt(v.stock, 10) || 0 })),
+      variants: fields.variantTypes
+        .filter(type => type.key.trim())
+        .flatMap(type =>
+          type.values
+            .filter(v => v.value.trim())
+            .map(v => ({
+              options: { [type.key.trim()]: v.value.trim() },
+              stock: parseInt(v.stock, 10) || 0,
+            }))
+        ),
     };
     onSave(formData);
   }
@@ -235,31 +277,60 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
             + Add Attribute
           </button>
 
-          <div className="form-section-title">Variants (Sizes)</div>
-          {fields.variants.map((v, i) => (
-            <div key={i} className="variant-row">
-              <input
-                type="text"
-                placeholder="Size (e.g. M)"
-                aria-label={`variant ${i} size`}
-                value={v.size}
-                onChange={e => updateVariantRow(i, 'size', e.target.value)}
-              />
-              <input
-                type="number"
-                min="0"
-                placeholder="Stock"
-                aria-label={`variant ${i} stock`}
-                value={v.stock}
-                onChange={e => updateVariantRow(i, 'stock', e.target.value)}
-              />
-              <button type="button" className="btn-remove-attr" aria-label={`remove variant ${i}`} onClick={() => removeVariantRow(i)}>
-                &times;
+          <div className="form-section-title">Variants</div>
+          {fields.variantTypes.map((type, i) => (
+            <div key={i} className="variant-type-row">
+              <div className="variant-type-header">
+                <input
+                  type="text"
+                  placeholder="Variant type (e.g. colour, size)"
+                  aria-label={`variant type ${i} key`}
+                  value={type.key}
+                  onChange={e => updateVariantTypeKey(i, e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn-remove-attr"
+                  aria-label={`remove variant type ${i}`}
+                  onClick={() => removeVariantType(i)}
+                >
+                  Remove
+                </button>
+              </div>
+              {type.values.map((v, j) => (
+                <div key={j} className="attr-row variant-value-row">
+                  <input
+                    type="text"
+                    placeholder="Value (e.g. blue)"
+                    aria-label={`variant type ${i} value ${j}`}
+                    value={v.value}
+                    onChange={e => updateVariantValue(i, j, 'value', e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Stock"
+                    aria-label={`variant type ${i} stock ${j}`}
+                    value={v.stock}
+                    onChange={e => updateVariantValue(i, j, 'stock', e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn-remove-attr"
+                    aria-label={`remove variant type ${i} value ${j}`}
+                    onClick={() => removeVariantValue(i, j)}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="btn-add-attr" onClick={() => addVariantValue(i)}>
+                + Add Value
               </button>
             </div>
           ))}
-          <button type="button" className="btn-add-attr" onClick={addVariantRow}>
-            + Add Size
+          <button type="button" className="btn-add-attr" onClick={addVariantType}>
+            + Add Variant Type
           </button>
 
           <div className="form-actions">

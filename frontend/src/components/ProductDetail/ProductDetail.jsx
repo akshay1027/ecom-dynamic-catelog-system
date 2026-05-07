@@ -1,5 +1,15 @@
 import './ProductDetail.css';
 
+function groupVariantsByKey(variants) {
+  return variants.reduce((acc, v) => {
+    for (const key of Object.keys(v.options)) {
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(v);
+    }
+    return acc;
+  }, {});
+}
+
 export default function ProductDetail({ product, onClose }) {
   const {
     name, brandName, description, price, currency, category, type,
@@ -35,23 +45,25 @@ export default function ProductDetail({ product, onClose }) {
             </div>
           )}
 
-          {variants && variants.length > 0 && (
-            <div>
-              <div className="product-detail__section-title">Available Sizes</div>
+          {variants && variants.length > 0 && Object.entries(groupVariantsByKey(variants)).map(([key, group]) => (
+            <div key={key}>
+              <div className="product-detail__section-title">
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </div>
               <div className="product-detail__variants">
-                {variants.map(v => (
+                {group.map(v => (
                   <span
                     key={v.id}
                     className={`variant-pill${v.stock === 0 ? ' variant-pill--oos' : ''}`}
                   >
-                    {v.options.size}
+                    {v.options[key]}
                     {v.stock === 0 && <span className="variant-pill__oos-label"> (Out of stock)</span>}
                     {v.stock > 0 && <span className="variant-pill__stock">{v.stock} left</span>}
                   </span>
                 ))}
               </div>
             </div>
-          )}
+          ))}
 
           {attributes && Object.keys(attributes).length > 0 && (
             <div>
