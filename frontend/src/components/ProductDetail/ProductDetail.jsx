@@ -60,7 +60,7 @@ export default function ProductDetail({ product, onClose }) {
                 {Object.entries(attributes).map(([key, val]) => (
                   <div key={key} className="product-detail__attribute-row">
                     <span className="product-detail__attribute-key">{key.replace(/_/g, ' ')}</span>
-                    <span className="product-detail__attribute-val">{String(val)}</span>
+                    <span className="product-detail__attribute-val">{val === true ? 'Yes' : val === false ? 'No' : String(val)}</span>
                   </div>
                 ))}
               </div>

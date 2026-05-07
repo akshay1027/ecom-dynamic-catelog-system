@@ -3,7 +3,7 @@ import './ProductCard.css';
 function AttributeBadge({ label, value }) {
   return (
     <span className="attribute-badge">
-      {label}: {value}
+      {label}: {value === true ? 'Yes' : value === false ? 'No' : value}
     </span>
   );
 }
@@ -34,7 +34,7 @@ export default function ProductCard({ product, onClick }) {
         {attributeEntries.length > 0 && (
           <div className="product-card__attributes">
             {attributeEntries.map(([key, val]) => (
-              <AttributeBadge key={key} label={key} value={val} />
+              <AttributeBadge key={key} label={key.replace(/_/g, ' ')} value={val} />
             ))}
           </div>
         )}

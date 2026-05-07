@@ -97,6 +97,17 @@ describe('ProductCard', () => {
     expect(container.querySelector('.product-card__variants')).toBeNull();
   });
 
+  test('formats underscore attribute keys with spaces', () => {
+    render(<ProductCard product={{ ...baseProduct, attributes: { heel_height: '5cm' } }} />);
+    expect(screen.getByText(/heel height/i)).toBeInTheDocument();
+    expect(screen.queryByText(/heel_height/i)).not.toBeInTheDocument();
+  });
+
+  test('renders boolean true attribute value as "Yes"', () => {
+    render(<ProductCard product={{ ...baseProduct, attributes: { waterproof: true } }} />);
+    expect(screen.getByText(/yes/i)).toBeInTheDocument();
+  });
+
   test('applies size-chip--oos class to out-of-stock variant chips', () => {
     const product = {
       ...baseProduct,

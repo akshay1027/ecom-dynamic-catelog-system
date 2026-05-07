@@ -97,6 +97,11 @@ describe('ProductDetail', () => {
     expect(screen.getByText(/out of stock/i)).toBeTruthy();
   });
 
+  test('renders boolean true attribute as "Yes"', () => {
+    render(<ProductDetail product={{ ...product, attributes: { waterproof: true } }} onClose={() => {}} />);
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+  });
+
   test('does not render variants section when variants is empty', () => {
     const productNoVariants = { ...product, variants: [] };
     const { container } = render(<ProductDetail product={productNoVariants} onClose={vi.fn()} />);
