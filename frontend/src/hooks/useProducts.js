@@ -39,6 +39,24 @@ export function useProducts(filters = {}) {
   return { items, total, loading, error };
 }
 
+export function useAttributeSchema({ category } = {}) {
+  const [schema, setSchema] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!category) { setSchema({}); return; }
+    let cancelled = false;
+    setLoading(true);
+    productsApi.getAttributeSchema({ category })
+      .then(schema => { if (!cancelled) setSchema(schema || {}); })
+      .catch(() => { if (!cancelled) setSchema({}); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [category]);
+
+  return { schema, loading };
+}
+
 export function useBrands() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);

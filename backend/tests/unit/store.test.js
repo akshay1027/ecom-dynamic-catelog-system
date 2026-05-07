@@ -211,6 +211,92 @@ describe('store.search()', () => {
   });
 });
 
+describe('attributeRegistry', () => {
+  it('getAttributeSchema returns empty object when no products', () => {
+    expect(store.getAttributeSchema('electronics')).toEqual({});
+  });
+
+  it('derives type: string with distinct values', () => {
+    store.create({ name: 'A', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'red' } });
+    store.create({ name: 'B', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'blue' } });
+    const schema = store.getAttributeSchema('apparel');
+    expect(schema.color).toEqual({ type: 'string', values: ['blue', 'red'] }); // sorted
+  });
+
+  it('derives type: number with min and max', () => {
+    store.create({ name: 'A', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 8 } });
+    store.create({ name: 'B', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 32 } });
+    const schema = store.getAttributeSchema('electronics');
+    expect(schema.ram_gb).toEqual({ type: 'number', min: 8, max: 32 });
+  });
+
+  it('derives type: boolean', () => {
+    store.create({ name: 'A', price: 10, currency: 'USD', category: 'apparel', type: 'jacket', stock: 1, brandId: 'b1', attributes: { waterproof: true } });
+    const schema = store.getAttributeSchema('apparel');
+    expect(schema.waterproof).toEqual({ type: 'boolean' });
+  });
+
+  it('returns null category schema after clear()', () => {
+    store.create({ name: 'A', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 16 } });
+    store.clear();
+    expect(store.getAttributeSchema('electronics')).toEqual({});
+  });
+
+  it('schema updates when product is updated with new attribute values', () => {
+    const p = store.create({ name: 'A', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'red' } });
+    store.update(p.id, { attributes: { color: 'green' } });
+    const schema = store.getAttributeSchema('apparel');
+    expect(schema.color.values).toContain('green');
+  });
+});
+
+describe('search: attribute multi-value OR', () => {
+  it('returns products matching any value in array', () => {
+    store.create({ name: 'Red', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'red' } });
+    store.create({ name: 'Blue', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'blue' } });
+    store.create({ name: 'Green', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'green' } });
+    const result = store.search({ attributes: { color: ['red', 'blue'] } });
+    expect(result.total).toBe(2);
+    expect(result.items.map(p => p.name).sort()).toEqual(['Blue', 'Red']);
+  });
+
+  it('treats empty array as no filter (returns all)', () => {
+    store.create({ name: 'X', price: 10, currency: 'USD', category: 'apparel', type: 'shirt', stock: 1, brandId: 'b1', attributes: { color: 'red' } });
+    const result = store.search({ attributes: { color: [] } });
+    expect(result.total).toBe(1);
+  });
+});
+
+describe('search: attribute numeric range', () => {
+  beforeEach(() => {
+    store.create({ name: 'Low', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 8 } });
+    store.create({ name: 'Mid', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 16 } });
+    store.create({ name: 'High', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 32 } });
+  });
+
+  it('filters by min only', () => {
+    const result = store.search({ attributes: { ram_gb: { min: 16 } } });
+    expect(result.total).toBe(2);
+  });
+
+  it('filters by max only', () => {
+    const result = store.search({ attributes: { ram_gb: { max: 16 } } });
+    expect(result.total).toBe(2);
+  });
+
+  it('filters by both min and max', () => {
+    const result = store.search({ attributes: { ram_gb: { min: 16, max: 16 } } });
+    expect(result.total).toBe(1);
+    expect(result.items[0].name).toBe('Mid');
+  });
+
+  it('excludes product when attribute is non-numeric for range filter', () => {
+    store.create({ name: 'TextAttr', price: 10, currency: 'USD', category: 'electronics', type: 'laptop', stock: 1, brandId: 'b1', attributes: { ram_gb: 'na' } });
+    const result = store.search({ attributes: { ram_gb: { min: 8 } } });
+    expect(result.items.every(p => p.name !== 'TextAttr')).toBe(true);
+  });
+});
+
 describe('store.search() by brandId', () => {
   beforeEach(() => {
     store.create({ name: 'Alpha Shoe', price: 80, currency: 'USD', category: 'apparel', type: 'shoe', stock: 5, brandId: 'brand-alpha', brandName: 'Alpha' });

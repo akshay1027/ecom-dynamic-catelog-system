@@ -8,9 +8,71 @@ const byCategory = new Map(); // category -> Set of ids
 const byType = new Map();     // type -> Set of ids
 const byBrand = new Map();    // brandId -> Set of ids
 
+// Attribute registry: category → { [key]: { type, values: Set, min, max } }
+// Maintained on every product write — O(1) reads at query time
+const attributeRegistry = new Map();
+
 function addToIndex(indexMap, key, id) {
   if (!indexMap.has(key)) indexMap.set(key, new Set());
   indexMap.get(key).add(id);
+}
+
+function updateRegistry(category, attributes) {
+  if (!attributes || typeof attributes !== 'object') return;
+  if (!attributeRegistry.has(category)) attributeRegistry.set(category, {});
+  const catReg = attributeRegistry.get(category);
+  for (const [key, val] of Object.entries(attributes)) {
+    if (!catReg[key]) catReg[key] = { type: null, values: new Set(), min: Infinity, max: -Infinity };
+    const entry = catReg[key];
+    if (typeof val === 'boolean') {
+      if (entry.type === null) entry.type = 'boolean';
+    } else if (typeof val === 'number') {
+      entry.type = entry.type === 'string' ? 'string' : 'number';
+      entry.min = Math.min(entry.min, val);
+      entry.max = Math.max(entry.max, val);
+    } else {
+      entry.type = 'string';
+      entry.values.add(String(val));
+    }
+  }
+}
+
+function mergeAllCategories() {
+  const merged = {};
+  for (const catSchema of attributeRegistry.values()) {
+    for (const [key, entry] of Object.entries(catSchema)) {
+      if (!merged[key]) {
+        merged[key] = { type: entry.type, values: new Set(entry.values), min: entry.min, max: entry.max };
+      } else {
+        if (entry.type === 'string') merged[key].type = 'string';
+        entry.values.forEach(v => merged[key].values.add(v));
+        if (typeof entry.min === 'number') merged[key].min = Math.min(merged[key].min, entry.min);
+        if (typeof entry.max === 'number') merged[key].max = Math.max(merged[key].max, entry.max);
+      }
+    }
+  }
+  return merged;
+}
+
+function serializeSchema(schema) {
+  const result = {};
+  for (const [key, entry] of Object.entries(schema)) {
+    if (entry.type === 'boolean') {
+      result[key] = { type: 'boolean' };
+    } else if (entry.type === 'number') {
+      result[key] = { type: 'number', min: entry.min === Infinity ? 0 : entry.min, max: entry.max === -Infinity ? 0 : entry.max };
+    } else if (entry.type === 'string') {
+      result[key] = { type: 'string', values: [...entry.values].sort() };
+    }
+  }
+  return result;
+}
+
+function getAttributeSchema(category) {
+  const source = category
+    ? (attributeRegistry.get(category) || {})
+    : mergeAllCategories();
+  return serializeSchema(source);
 }
 
 function removeFromIndex(indexMap, key, id) {
@@ -59,6 +121,7 @@ function create(data) {
   addToIndex(byCategory, product.category, product.id);
   addToIndex(byType, product.type, product.id);
   addToIndex(byBrand, product.brandId, product.id);
+  updateRegistry(product.category, product.attributes);
 
   return { ...product };
 }
@@ -104,6 +167,7 @@ function update(id, patch) {
   }
 
   store.set(id, updated);
+  updateRegistry(updated.category, updated.attributes);
   return { ...updated };
 }
 
@@ -154,8 +218,22 @@ function search(filters = {}) {
     if (name && !product.name.toLowerCase().includes(name.toLowerCase())) return false;
     if (attrFilters && typeof attrFilters === 'object') {
       for (const [key, val] of Object.entries(attrFilters)) {
-        // String comparison handles numeric attribute values arriving as query-string strings
-        if (product.attributes[key] == null || String(product.attributes[key]) !== String(val)) return false;
+        const productVal = product.attributes[key];
+        if (productVal == null) return false;
+
+        if (Array.isArray(val)) {
+          if (val.length === 0) continue; // empty array = no filter
+          if (!val.map(String).includes(String(productVal))) return false;
+        } else if (val !== null && typeof val === 'object') {
+          // Numeric range: { min?, max? }
+          const numVal = Number(productVal);
+          if (isNaN(numVal)) return false;
+          if (val.min !== undefined && val.min !== '' && numVal < Number(val.min)) return false;
+          if (val.max !== undefined && val.max !== '' && numVal > Number(val.max)) return false;
+        } else {
+          // Exact match (backward-compatible)
+          if (String(productVal) !== String(val)) return false;
+        }
       }
     }
     if (tags) {
@@ -179,6 +257,7 @@ function clear() {
   byCategory.clear();
   byType.clear();
   byBrand.clear();
+  attributeRegistry.clear();
 }
 
-module.exports = { create, findById, update, remove, search, clear };
+module.exports = { create, findById, update, remove, search, clear, getAttributeSchema };

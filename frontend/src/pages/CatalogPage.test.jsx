@@ -5,6 +5,7 @@ import CatalogPage from './CatalogPage';
 vi.mock('../hooks/useProducts', () => ({
   useProducts: vi.fn(() => ({ items: [], total: 0, loading: false, error: null })),
   useBrands: vi.fn(() => ({ brands: [], loading: false, error: null })),
+  useAttributeSchema: vi.fn(() => ({ schema: {}, loading: false })),
 }));
 
 describe('CatalogPage drawer behavior', () => {
