@@ -115,16 +115,16 @@ describe('store.update()', () => {
     expect(store.update('nonexistent', { price: 100 })).toBeNull();
   });
 
-  test('merges attributes (existing keys preserved, new keys added)', () => {
+  test('replaces attributes entirely (omitted keys are removed)', () => {
     const created = store.create({
       name: 'Laptop', price: 999, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5,
       attributes: { brand: 'Dell', ram: '16GB' },
       brandId: 'test-brand-id', brandName: 'Test Brand',
     });
     const updated = store.update(created.id, { attributes: { ram: '32GB', storage: '1TB' } });
-    expect(updated.attributes.brand).toBe('Dell'); // preserved
-    expect(updated.attributes.ram).toBe('32GB');   // updated
-    expect(updated.attributes.storage).toBe('1TB'); // new
+    expect(updated.attributes.brand).toBeUndefined(); // deleted
+    expect(updated.attributes.ram).toBe('32GB');      // updated
+    expect(updated.attributes.storage).toBe('1TB');   // new
   });
 });
 

@@ -167,11 +167,6 @@ function update(id, patch) {
     })(),
   };
 
-  // Merge attributes rather than replace — preserves existing keys, adds/updates new ones
-  if (patch.attributes) {
-    updated.attributes = { ...existing.attributes, ...patch.attributes };
-  }
-
   // Update indexes if category, type, or brandId changed
   if (patch.category && patch.category !== existing.category) {
     removeFromIndex(byCategory, existing.category, id);
