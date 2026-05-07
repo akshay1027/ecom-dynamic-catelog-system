@@ -124,7 +124,7 @@ describe('PUT /api/v1/products/:id', () => {
     expect(res.body.data.updatedAt).not.toBe(originalCreatedAt);
   });
 
-  test('merges attributes — existing keys preserved, new keys added', async () => {
+  test('replaces attributes entirely — omitted keys are removed', async () => {
     const created = await createProduct({ attributes: { size: 'M', color: 'blue' } });
     const id = created.body.data.id;
 
@@ -133,7 +133,7 @@ describe('PUT /api/v1/products/:id', () => {
       .send({ attributes: { color: 'green', material: 'silk' } });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.attributes.size).toBe('M');       // preserved
+    expect(res.body.data.attributes.size).toBeUndefined(); // deleted
     expect(res.body.data.attributes.color).toBe('green');  // updated
     expect(res.body.data.attributes.material).toBe('silk'); // new
   });
