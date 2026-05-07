@@ -113,6 +113,12 @@
   gap: 4px;
   margin-top: 8px;
 }
+.product-card__variant-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+}
 .size-chip {
   font-size: 11px;
   padding: 2px 8px;

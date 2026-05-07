@@ -1,0 +1,1801 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.132
+           Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~/Documents/projects/ecom-dynamic-catelog-system
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+❯ /compact                                                                      
+  ⎿  Compacted (ctrl+o to see full summary)
+  ⎿  Read ../../../.claude/skills/create-session-doc.md (64 lines)
+  ⎿  Read ../../../.claude/skills/create-adr.md (72 lines)
+  ⎿  Read ../../../.claude/skills/create-pr.md (39 lines)
+  ⎿  Read docs/sessions/session-2026-05-07-v4-product-variants.md (48 lines)
+  ⎿  Read docs/sessions/session-2026-05-07-v3-attribute-filters.md (41 lines)
+  ⎿  Plan file referenced (~/.claude/plans/i-want-to-build-memoized-crayon.md)
+
+❯ /context 
+  ⎿  Context Usage
+     ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛀ ⛁   Sonnet 4.6
+     ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛶ ⛶ ⛶   claude-sonnet-4-6
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   35.4k/200k tokens (18%)
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ 
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   Estimated usage by category
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   ⛁ System prompt: 6.4k tokens (3.2%)
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   ⛁ System tools: 8.7k tokens (4.4%)
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   ⛁ Memory files: 2.1k tokens (1.1%)
+     ⛶ ⛶ ⛶ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝   ⛁ Skills: 1.3k tokens (0.6%)
+     ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝   ⛁ Messages: 17k tokens (8.5%)
+                           ⛶ Free space: 131.6k (65.8%)
+                           ⛝ Autocompact buffer: 33k tokens (16.5%)
+
+     MCP tools · /mcp (loaded on-demand)
+
+     Available
+     ├ mcp__claude_ai_Google_Drive__authenticate
+     ├ mcp__claude_ai_Google_Drive__complete_authentication
+     ├ mcp__github__add_issue_comment
+     ├ mcp__github__create_branch
+     ├ mcp__github__create_issue
+     ├ mcp__github__create_or_update_file
+     ├ mcp__github__create_pull_request
+     ├ mcp__github__create_pull_request_review
+     ├ mcp__github__create_repository
+     ├ mcp__github__fork_repository
+     ├ mcp__github__get_file_contents
+     ├ mcp__github__get_issue
+     ├ mcp__github__get_pull_request
+     ├ mcp__github__get_pull_request_comments
+     ├ mcp__github__get_pull_request_files
+     ├ mcp__github__get_pull_request_reviews
+     ├ mcp__github__get_pull_request_status
+     ├ mcp__github__list_commits
+     ├ mcp__github__list_issues
+     ├ mcp__github__list_pull_requests
+     ├ mcp__github__merge_pull_request
+     ├ mcp__github__push_files
+     ├ mcp__github__search_code
+     ├ mcp__github__search_issues
+     ├ mcp__github__search_repositories
+     ├ mcp__github__search_users
+     ├ mcp__github__update_issue
+     └ mcp__github__update_pull_request_branch
+
+     Memory files · /memory
+     ├ ~/.claude/CLAUDE.md: 1.6k tokens
+     └ CLAUDE.md: 455 tokens
+
+     Skills · /skills
+
+     Project
+     ├ frontend-design: 104 tokens
+     ├ vercel-react-best-practices: 89 tokens
+     ├ vercel-composition-patterns: 85 tokens
+     ├ skill-creator: 83 tokens
+     ├ find-skills: 79 tokens
+     ├ webapp-testing: 55 tokens
+     └ web-design-guidelines: 52 tokens
+
+❯ /rename dynamic-catalog-3RD-session 
+  ⎿  Session renamed to: dynamic-catalog-3RD-session
+
+❯ Next version, Tasks:                                                          
+  1. lets extend and work on making the variants dynamic as well just like the  
+  attribuates. All related backend, catalog, product should be extended         
+  accordingly.                                                                  
+
+⏺ I'll explore the current codebase to understand what needs to change to make
+  variants fully dynamic.
+
+⏺ 2 Explore agents finished (ctrl+o to expand)
+   ├ Explore variant-related frontend components · 4 tool uses · 18.9k tokens
+   │ ⎿  Done
+   └ Explore backend store and schema for variant handling · 2 tool uses · 18.8k tokens
+     ⎿  Done
+
+⏺ Good. Backend is already fully generic — search() routes by isVariantDimension
+   for any key, serializeSchema exposes it per-key. The hardcoding is entirely
+  in the frontend. Let me design the plan.
+
+⏺ Plan(Design dynamic variants implementation plan)
+  ⎿  Done (12 tool uses · 42.7k tokens · 1m 32s)
+  (ctrl+o to expand)
+
+⏺ Good plan. Let me read the test files to finalize the details before writing
+  the plan.
+
+⏺ Bash(find /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/front
+      end/src/components -name "*.test.jsx" | xargs grep -n
+      "variant\|size\|Sizes" 2>/dev/nul…)
+  ⎿  /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/fronten
+     d/src/components/ProductDetail/ProductDetail.test.jsx:17:  attributes:
+      { size: 'M', color: 'blue', material: 'cotton' },
+     … +124 lines (ctrl+o to expand)
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Now I have everything. Writing the final plan.
+
+⏺ Updated plan
+  ⎿  File must be read first
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Updated plan
+  ⎿  /plan to preview
+  ⎿  Tool use rejected
+
+⏺ The user is clarifying the mental model: a "variant" is a TYPE (e.g., colour),
+   and within it you define multiple VALUES (blue, green, yellow), each with its
+   own stock. Not individual rows with multiple keys — it's hierarchical: type →
+   values. Let me update the plan.
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/i-want-to-build-memoized-crayon.md · /plan 
+     to edit
+     v5: Dynamic Variant Options
+
+     Context
+
+     v4 (size-only variants) is complete. Now brands should be able to define
+     their own variant TYPES (colour, size, material, etc.) and specify multiple
+      VALUES per type (e.g., colour → blue, green, yellow), each with individual
+      stock. The backend is already fully generic — no changes needed there. All
+      changes are in the admin form and the display components.
+
+     User's mental model:
+     - "Variant" = a variant type/dimension (colour, size, material)
+     - "Options for each variant" = the values under that type (blue, green,
+     yellow)
+     - Each value is a separate backend variant: { options: { colour: 'blue' }, 
+     stock: 10 }
+     - Single-key variants only in this phase (multi-dimensional combinations
+     like size+colour deferred)
+
+     ---
+     Backend — no changes
+
+     inMemoryStore.js already handles any options key via isVariantDimension
+     routing in search(). serializeSchema already exposes isVariantDimension.
+     Variant CRUD endpoints already accept { options: { [key]: value }, stock }.
+
+     Seed data update — 3 apparel products get colour as a second variant type
+     (each colour value = separate variant, single-key options):
+     - Slim Fit Graphic Tee: keep existing size variants + add colour variants {
+      options: { colour: 'black' }, stock: 40 }, { options: { colour: 'white' },
+      stock: 30 }. Remove color from attributes.
+     - Performance Running Shorts: same pattern (black/navy colour variants).
+     - Floral Midi Dress: same pattern (floral pink/floral blue colour
+     variants).
+
+     ---
+     Frontend Changes
+
+     ProductForm.jsx — main change
+
+     State shape — replace flat variants: [{ id, size, stock }] with
+     hierarchical variantTypes:
+     variantTypes: [
+       { key: 'size', values: [{ id: 'v1', value: 'M', stock: '40' }, ...] },
+       { key: 'colour', values: [{ id: 'v2', value: 'blue', stock: '10' }, ...]
+     },
+     ]
+
+     buildInitialState — reconstruct types from backend variants:
+     function buildVariantTypes(variants = []) {
+       const typeMap = new Map();
+       for (const v of variants) {
+         for (const [key, val] of Object.entries(v.options || {})) {
+           if (!typeMap.has(key)) typeMap.set(key, []);
+           typeMap.get(key).push({ id: v.id, value: String(val), stock:
+     String(v.stock) });
+         }
+       }
+       return [...typeMap.entries()].map(([key, values]) => ({ key, values }));
+     }
+     // In buildInitialState:
+     variantTypes: buildVariantTypes(product?.variants)
+
+     New handlers:
+     - addVariantType() → appends { key: '', values: [] } to variantTypes
+     - updateVariantTypeKey(typeIdx, key) → updates variantTypes[typeIdx].key
+     - removeVariantType(typeIdx) → removes that type
+     - addVariantValue(typeIdx) → appends { id: null, value: '', stock: '0' } to
+      variantTypes[typeIdx].values
+     - updateVariantValue(typeIdx, valIdx, field, val) → updates value or stock
+     - removeVariantValue(typeIdx, valIdx) → removes that value row
+
+     Section title/button: "Variants" / "+ Add Variant Type"
+
+     Variant type row JSX:
+     <div className="variant-type-row">
+       <input placeholder="Variant type (e.g. colour, size)"
+         value={type.key}
+         onChange={e => updateVariantTypeKey(i, e.target.value)} />
+       <button onClick={() => removeVariantType(i)}>Remove</button>
+
+       {type.values.map((v, j) => (
+         <div key={j} className="variant-value-row">
+           <input placeholder="Value (e.g. blue)"
+             aria-label={`variant type ${i} value ${j}`}
+             value={v.value}
+             onChange={e => updateVariantValue(i, j, 'value', e.target.value)}
+     />
+           <input type="number" min="0" placeholder="Stock"
+             aria-label={`variant type ${i} stock ${j}`}
+             value={v.stock}
+             onChange={e => updateVariantValue(i, j, 'stock', e.target.value)}
+     />
+           <button aria-label={`remove variant type ${i} value ${j}`}
+             onClick={() => removeVariantValue(i, j)}>&times;</button>
+         </div>
+       ))}
+       <button onClick={() => addVariantValue(i)}>+ Add Value</button>
+     </div>
+
+     handleSubmit — flatten variant types to backend variant array:
+     const variants = fields.variantTypes
+       .filter(type => type.key.trim())
+       .flatMap(type =>
+         type.values
+           .filter(v => v.value.trim())
+           .map(v => ({
+             options: { [type.key.trim()]: v.value.trim() },
+             stock: parseInt(v.stock, 10) || 0,
+           }))
+       );
+     onSave({ ...formData, variants });
+
+     ProductCard.jsx
+
+     Group variants by their options key, show value chips per group:
+     function groupVariantsByKey(variants) {
+       return variants.reduce((acc, v) => {
+         for (const key of Object.keys(v.options)) {
+           if (!acc[key]) acc[key] = [];
+           acc[key].push(v);
+         }
+         return acc;
+       }, {});
+     }
+     {variants && variants.length > 0 && (
+       <div className="product-card__variants">
+         {Object.entries(groupVariantsByKey(variants)).map(([key, group]) => (
+           <div key={key} className="product-card__variant-group">
+             {group.map(v => (
+               <span key={v.id}
+                 className={`size-chip${v.stock === 0 ? ' size-chip--oos' : 
+     ''}`}
+                 title={v.stock === 0 ? 'Out of stock' : `${v.stock} in stock`}>
+                 {v.options[key]}
+               </span>
+             ))}
+           </div>
+         ))}
+       </div>
+     )}
+
+     ProductDetail.jsx
+
+     Show one labelled section per variant type:
+     {variants && variants.length > 0 && (
+       <>
+         {Object.entries(groupVariantsByKey(variants)).map(([key, group]) => (
+           <div key={key}>
+             <div className="product-detail__section-title">
+               {key.charAt(0).toUpperCase() + key.slice(1)}
+             </div>
+             <div className="product-detail__variants">
+               {group.map(v => (
+                 <span key={v.id} className={`variant-pill${v.stock === 0 ? ' 
+     variant-pill--oos' : ''}`}>
+                   {v.options[key]}
+                   {v.stock === 0 && <span className="variant-pill__oos-label">
+     (Out of stock)</span>}
+                   {v.stock > 0 && <span 
+     className="variant-pill__stock">{v.stock} left</span>}
+                 </span>
+               ))}
+             </div>
+           </div>
+         ))}
+       </>
+     )}
+
+     AttributeFilters.jsx — no changes
+
+     Colour/size already surface from schema as isVariantDimension: true string
+     entries. The existing checkbox rendering handles them correctly.
+
+     ---
+     Test Changes
+
+     ProductForm.test.jsx — replace all 6 variant tests, add 4
+
+     Replace all existing describe('ProductForm variants section') with new
+     tests for the type+values model:
+     - 'renders existing variant types with values' — product with variants: [{ 
+     id:'v1', options:{ size:'M' }, stock:20 }] → form shows type key "size" and
+      value "M"
+     - 'Add Variant Type button appends empty type row'
+     - 'Add Value button appends empty value row to a type'
+     - 'removing a value row removes it from the type'
+     - 'removing a variant type removes it entirely'
+     - 'handleSubmit flattens variantTypes to backend variant array' — type
+     "colour", values blue(10)+green(20) → variants: [{ options:{colour:'blue'},
+      stock:10 }, { options:{colour:'green'}, stock:20 }]
+     - 'handleSubmit skips types with empty key'
+     - 'handleSubmit skips values with empty value string'
+     - 'handleSubmit handles multiple types' — size + colour types → correct
+     flat array
+     - 'buildVariantTypes groups existing variants by key' — test the helper
+     directly
+
+     ProductCard.test.jsx — update 2 existing, add 2
+
+     - 'renders size chips when product has variants' — update: with single-type
+      { size:'S'/'M' }, chips still show 'S', 'M' (value of the single key).
+     Test still passes.
+     - 'applies size-chip--oos class to out-of-stock variant chips' — still
+     passes.
+     - Add: 'renders chips grouped by variant type' — two variant groups (size +
+      colour), each group has chips
+     - Add: 'renders separate groups for each variant type key' — verify
+     .product-card__variant-group count = number of distinct types
+
+     ProductDetail.test.jsx — update 2 existing, add 2
+
+     - 'renders Available Sizes section when product has variants' — BREAKS: old
+      test expects getByText('Available Sizes'). Update: component now renders
+     getByText('Size') (capitalized key). Fix fixture and assertion.
+     - 'renders each variant size option' — still passes (values still render as
+      'S', 'XL').
+     - Add: 'renders separate section per variant type' — product with size +
+     colour variants → two sections with titles 'Size' and 'Colour'
+     - Add: 'renders variant values under correct type section'
+
+     ---
+     ADR
+
+     ADR-009: Dynamic Variant Form UX — "Variant type with value list" model
+     (chosen) vs "Per-variant row with key-value pairs". Tradeoff: the
+     type+values model is more intuitive for brand admins (matches how
+     Shopify/etc. present variants) and enforces consistent key names per type.
+     The per-row approach is more flexible but leads to inconsistent option keys
+      (one row has colour, another has color). Consequence: single-key variants
+     only in storage (no multi-dimensional combinations in Phase 1).
+
+     ---
+     Critical Files
+
+     frontend/src/components/ProductForm/ProductForm.jsx
+     frontend/src/components/ProductForm/ProductForm.test.jsx
+     frontend/src/components/ProductCard/ProductCard.jsx
+     frontend/src/components/ProductCard/ProductCard.test.jsx
+     frontend/src/components/ProductDetail/ProductDetail.jsx
+     frontend/src/components/ProductDetail/ProductDetail.test.jsx
+     backend/src/seed.js
+     docs/adr/ADR-009-dynamic-variant-form-ux.md
+     docs/sessions/session-2026-05-07-v5-dynamic-variants.md
+
+     ---
+     Execution Order (TDD)
+
+     1. seed.js — add colour variant type to 3 apparel products (removes color
+     from attributes)
+     2. ProductCard tests (update 2, add 2) → fix ProductCard.jsx +
+     groupVariantsByKey helper
+     3. ProductDetail tests (update 2, add 2) → fix ProductDetail.jsx
+     4. ProductForm tests (replace all 6, add 4) → fix ProductForm.jsx + CSS for
+      new structure
+     5. Run all tests — green
+     6. Visual check both servers
+     7. /create-adr → ADR-009
+     8. /create-session-doc
+     9. /create-pr
+
+     ---
+     Verification
+
+     cd backend && npm test   # ~139 green (no backend changes)
+     cd frontend && npm test  # ~79+ green
+     Visual (both servers running):
+     - Catalog → Apparel → sidebar shows "size" filter + "colour" filter (new
+     from seed)
+     - Select colour = black → only apparel with black colour variant (in stock)
+      shown
+     - Product card for Graphic Tee → grouped chips: [S] [M] [L] row, [black] 
+     [white] row
+     - Product detail → "Size" section + "Colour" section (separate)
+     - Admin → Edit product → Variants section: type "size" with S/M/L values +
+     type "colour" with black/white values
+     - Admin → + Add Variant Type → type "material", + Add Value → "wool", stock
+      5 → saves correctly
+     - New product with custom variant type works end-to-end
+
+⏺ Starting implementation. First, let me check git state and read the files I'll
+   be modifying.
+
+⏺ Bash(git log --oneline -5 && echo "---" && git branch -a | head -10)
+  ⎿  453ce1a fix: replace 2 broken and 1 duplicate seed images (curl-verifi
+     ed)
+     14233fa fix: replace 4 broken-image products with new seed products
+     … +15 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ We're still on feat/v4-product-variants. I'll create a new branch and start
+  TDD implementation. Let me read the test and component files first.
+
+⏺ Bash(git checkout -b feat/v5-dynamic-variants)
+  ⎿  Switched to a new branch 'feat/v5-dynamic-variants'
+
+  Read 3 files (ctrl+o to expand)
+
+⏺ Now let me read the current component implementations before modifying them.
+
+  Read 3 files (ctrl+o to expand)
+
+⏺ Good. I have everything I need. Let me implement in TDD order. Starting with
+  seed.js, then frontend components.
+
+⏺ Update(backend/src/seed.js)
+  ⎿  Added 3 lines, removed 1 line
+      132        price: 24.99, currency: 'USD', category: 'apparel', type
+           : 't-shirt',
+      133        images: ['https://images.unsplash.com/photo-158374381496
+           6-8936f5b7be1a?w=400'],
+      134        stock: 0, tags: ['casual', 'streetwear'],
+      135 -      attributes: { color: 'black', material: 'cotton', fit: '
+          -slim' },                                                      
+      135 +      attributes: { material: 'cotton', fit: 'slim' },        
+      136        variants: [
+      137          { options: { size: 'XS' }, stock: 15 },
+      138          { options: { size: 'S' }, stock: 20 },
+     ...
+      140          { options: { size: 'L' }, stock: 30 },
+      141          { options: { size: 'XL' }, stock: 25 },
+      142          { options: { size: 'XXL' }, stock: 15 },
+      143 +        { options: { colour: 'black' }, stock: 80 },          
+      144 +        { options: { colour: 'white' }, stock: 60 },          
+      145        ],
+      146        brandId: bm['StreetStyle'].id, brandName: 'StreetStyle',
+      147      },
+
+⏺ Update(backend/src/seed.js)
+  ⎿  Added 6 lines, removed 2 lines
+      167        price: 39.99, currency: 'USD', category: 'apparel', type
+           : 'shorts',
+      168        images: ['https://picsum.photos/seed/102/400/300'],
+      169        stock: 0, tags: ['athletic', 'running', 'gym'],
+      170 -      attributes: { color: 'black', material: 'polyester', fit
+          -: 'slim' },                                                   
+      170 +      attributes: { material: 'polyester', fit: 'slim' },     
+      171        variants: [
+      172          { options: { size: 'XS' }, stock: 12 },
+      173          { options: { size: 'S' }, stock: 18 },
+     ...
+      175          { options: { size: 'L' }, stock: 22 },
+      176          { options: { size: 'XL' }, stock: 16 },
+      177          { options: { size: 'XXL' }, stock: 10 },
+      178 +        { options: { colour: 'black' }, stock: 55 },          
+      179 +        { options: { colour: 'navy' }, stock: 45 },           
+      180        ],
+      181        brandId: bm['ActiveWear'].id, brandName: 'ActiveWear',
+      182      },
+     ...
+      186        price: 69.99, currency: 'USD', category: 'apparel', type
+           : 'dress',
+      187        images: ['https://images.unsplash.com/photo-151537203974
+           4-b8f02a3ae446?w=400'],
+      188        stock: 0, tags: ['casual', 'summer', 'floral'],
+      187 -      attributes: { color: 'floral pink', material: 'chiffon',
+          - fit: 'relaxed' },                                            
+      189 +      attributes: { material: 'chiffon', fit: 'relaxed' },    
+      190        variants: [
+      191          { options: { size: 'XS' }, stock: 10 },
+      192          { options: { size: 'S' }, stock: 15 },
+      193          { options: { size: 'M' }, stock: 20 },
+      194          { options: { size: 'L' }, stock: 18 },
+      195          { options: { size: 'XL' }, stock: 12 },
+      196 +        { options: { colour: 'floral pink' }, stock: 40 },    
+      197 +        { options: { colour: 'floral blue' }, stock: 35 },    
+      198        ],
+      199        brandId: bm['Everyday Basics'].id, brandName: 'Everyday 
+           Basics',
+      200      },
+
+⏺ Good. Now TDD for ProductCard — add failing tests first, then fix the
+  component.
+
+⏺ Update(frontend/src/components/ProductCard/ProductCard.test.jsx)
+  ⎿  Added 31 lines
+      118      const chip = screen.getByText('M').closest('span');
+      119      expect(chip.className).toContain('size-chip--oos');
+      120    });
+      121 +                                                              
+      122 +  test('renders chips grouped by variant type for multi-type p
+          +roduct', () => {                                              
+      123 +    const product = {                                         
+      124 +      ...baseProduct,                                         
+      125 +      attributes: {},                                         
+      126 +      variants: [                                             
+      127 +        { id: 'v1', options: { size: 'S' }, stock: 10 },      
+      128 +        { id: 'v2', options: { size: 'M' }, stock: 20 },      
+      129 +        { id: 'v3', options: { colour: 'black' }, stock: 30 },
+      130 +        { id: 'v4', options: { colour: 'white' }, stock: 25 },
+      131 +      ],                                                      
+      132 +    };                                                        
+      133 +    render(<ProductCard product={product} onClick={vi.fn()} />
+          +);                                                            
+      134 +    expect(screen.getByText('S')).toBeTruthy();               
+      135 +    expect(screen.getByText('M')).toBeTruthy();               
+      136 +    expect(screen.getByText('black')).toBeTruthy();           
+      137 +    expect(screen.getByText('white')).toBeTruthy();           
+      138 +  });                                                         
+      139 +                                                              
+      140 +  test('renders one variant group div per distinct variant typ
+          +e key', () => {                                               
+      141 +    const product = {                                         
+      142 +      ...baseProduct,                                         
+      143 +      attributes: {},                                         
+      144 +      variants: [                                             
+      145 +        { id: 'v1', options: { size: 'S' }, stock: 10 },      
+      146 +        { id: 'v2', options: { colour: 'black' }, stock: 30 },
+      147 +      ],                                                      
+      148 +    };                                                        
+      149 +    const { container } = render(<ProductCard product={product
+          +} onClick={vi.fn()} />);                                      
+      150 +    expect(container.querySelectorAll('.product-card__variant-
+          +group')).toHaveLength(2);                                     
+      151 +  });                                                         
+      152  });
+
+⏺ Bash(cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/frontend &&
+       npm test -- --run --reporter=verbose ProductCard 2>&1 | tail -20)
+  ⎿  + Received
+
+     - 2
+     … +20 lines (ctrl+o to expand)
+
+⏺ RED confirmed — 2 new tests fail. Now fix ProductCard.jsx.
+
+⏺ Update(frontend/src/components/ProductCard/ProductCard.jsx)
+  ⎿  Added 12 lines, removed 8 lines
+      40          )}
+      41          {variants && variants.length > 0 && (
+      42            <div className="product-card__variants">
+      43 -            {variants.map(v => (                               
+      44 -              <span                                            
+      45 -                key={v.id}                                     
+      46 -                className={`size-chip${v.stock === 0 ? ' size-c
+         -hip--oos' : ''}`}                                              
+      47 -                title={v.stock === 0 ? 'Out of stock' : `${v.st
+         -ock} in stock`}                                                
+      48 -              >                                                
+      49 -                {v.options.size}                               
+      50 -              </span>                                          
+      43 +            {Object.entries(groupVariantsByKey(variants)).map((
+         +[key, group]) => (                                             
+      44 +              <div key={key} className="product-card__variant-g
+         +roup">                                                         
+      45 +                {group.map(v => (                              
+      46 +                  <span                                        
+      47 +                    key={v.id}                                 
+      48 +                    className={`size-chip${v.stock === 0 ? ' si
+         +ze-chip--oos' : ''}`}                                          
+      49 +                    title={v.stock === 0 ? 'Out of stock' : `${
+         +v.stock} in stock`}                                            
+      50 +                  >                                            
+      51 +                    {v.options[key]}                           
+      52 +                  </span>                                      
+      53 +                ))}                                            
+      54 +              </div>                                           
+      55              ))}
+      56            </div>
+      57          )}
+
+⏺ Now add the groupVariantsByKey helper before the component:
+
+⏺ Update(frontend/src/components/ProductCard/ProductCard.jsx)
+  ⎿  Added 10 lines
+       1  import './ProductCard.css';
+       2  
+       3 +function groupVariantsByKey(variants) {                        
+       4 +  return variants.reduce((acc, v) => {                         
+       5 +    for (const key of Object.keys(v.options)) {                
+       6 +      if (!acc[key]) acc[key] = [];                            
+       7 +      acc[key].push(v);                                        
+       8 +    }                                                          
+       9 +    return acc;                                                
+      10 +  }, {});                                                      
+      11 +}                                                              
+      12 +                                                               
+      13  function AttributeBadge({ label, value }) {
+      14    return (
+      15      <span className="attribute-badge">
+
+⏺ Bash(npm test -- --run --reporter=verbose ProductCard 2>&1 | tail -10)
+  ⎿   ✓ src/components/ProductCard/ProductCard.test.jsx > ProductCard > ren
+     ders boolean true attribute value as "Yes"
+      ✓ src/components/ProductCard/ProductCard.test.jsx > ProductCard > app
+     … +11 lines (ctrl+o to expand)
+
+⏺ 17/17 green. Now ProductDetail — add failing tests first.
+
+⏺ Update(frontend/src/components/ProductDetail/ProductDetail.test.jsx)  ⎿  Added 2 lines, removed 2 lines
+      63      expect(screen.getByText(/no image/i)).toBeInTheDocument();
+      64    });
+      65  
+      66 -  test('renders Available Sizes section when product has varian
+         -ts', () => {                                                   
+      66 +  test('renders variant type title and value when product has v
+         +ariants', () => {                                              
+      67      const productWithVariants = {
+      68        ...product,
+      69        attributes: { color: 'blue', material: 'cotton' },
+      70        variants: [{ id: 'v1', options: { size: 'XL' }, stock: 20
+           }],
+      71      };
+      72      render(<ProductDetail product={productWithVariants} onClose
+          ={vi.fn()} />);
+      73 -    expect(screen.getByText('Available Sizes')).toBeTruthy();  
+      73 +    expect(screen.getByText('Size')).toBeTruthy();             
+      74      expect(screen.getByText('XL')).toBeTruthy();
+      75    });
+      76  
+
+⏺ Update(frontend/src/components/ProductDetail/ProductDetail.test.jsx)
+  ⎿  Added 28 lines
+      107      const { container } = render(<ProductDetail product={produ
+           ctNoVariants} onClose={vi.fn()} />);
+      108      expect(container.querySelector('.product-detail__variants'
+           )).toBeNull();
+      109    });
+      110 +                                                              
+      111 +  test('renders separate section per variant type', () => {   
+      112 +    const productWithMultiTypes = {                           
+      113 +      ...product,                                             
+      114 +      variants: [                                             
+      115 +        { id: 'v1', options: { size: 'M' }, stock: 20 },      
+      116 +        { id: 'v2', options: { colour: 'black' }, stock: 30 },
+      117 +      ],                                                      
+      118 +    };                                                        
+      119 +    render(<ProductDetail product={productWithMultiTypes} onCl
+          +ose={vi.fn()} />);                                            
+      120 +    expect(screen.getByText('Size')).toBeTruthy();            
+      121 +    expect(screen.getByText('Colour')).toBeTruthy();          
+      122 +  });                                                         
+      123 +                                                              
+      124 +  test('renders variant values under correct type section', ()
+          + => {                                                         
+      125 +    const productWithMultiTypes = {                           
+      126 +      ...product,                                             
+      127 +      variants: [                                             
+      128 +        { id: 'v1', options: { size: 'M' }, stock: 20 },      
+      129 +        { id: 'v2', options: { colour: 'black' }, stock: 30 },
+      130 +        { id: 'v3', options: { colour: 'white' }, stock: 15 },
+      131 +      ],                                                      
+      132 +    };                                                        
+      133 +    render(<ProductDetail product={productWithMultiTypes} onCl
+          +ose={vi.fn()} />);                                            
+      134 +    expect(screen.getByText('M')).toBeTruthy();               
+      135 +    expect(screen.getByText('black')).toBeTruthy();           
+      136 +    expect(screen.getByText('white')).toBeTruthy();           
+      137 +  });                                                         
+      138  });
+
+⏺ Bash(npm test -- --run --reporter=verbose ProductDetail 2>&1 | tail -15)
+  ⎿   ❯ src/components/ProductDetail/ProductDetail.test.jsx:134:19
+         132|     };
+         133|     render(<ProductDetail product={productWithMultiTypes} onC
+     … +13 lines (ctrl+o to expand)
+
+⏺ RED — 3 failing. Now fix ProductDetail.jsx.
+
+⏺ Update(frontend/src/components/ProductDetail/ProductDetail.jsx)
+  ⎿  Added 10 lines
+       1  import './ProductDetail.css';
+       2  
+       3 +function groupVariantsByKey(variants) {                        
+       4 +  return variants.reduce((acc, v) => {                         
+       5 +    for (const key of Object.keys(v.options)) {                
+       6 +      if (!acc[key]) acc[key] = [];                            
+       7 +      acc[key].push(v);                                        
+       8 +    }                                                          
+       9 +    return acc;                                                
+      10 +  }, {});                                                      
+      11 +}                                                              
+      12 +                                                               
+      13  export default function ProductDetail({ product, onClose }) {
+      14    const {
+      15      name, brandName, description, price, currency, category, ty
+          pe,
+
+⏺ Update(frontend/src/components/ProductDetail/ProductDetail.jsx)
+  ⎿  Added 8 lines, removed 6 lines
+      45              </div>
+      46            )}
+      47  
+      48 -          {variants && variants.length > 0 && (                
+      49 -            <div>                                              
+      50 -              <div className="product-detail__section-title">Av
+         -ailable Sizes</div>                                            
+      48 +          {variants && variants.length > 0 && Object.entries(gr
+         +oupVariantsByKey(variants)).map(([key, group]) => (            
+      49 +            <div key={key}>                                    
+      50 +              <div className="product-detail__section-title">  
+      51 +                {key.charAt(0).toUpperCase() + key.slice(1)}   
+      52 +              </div>                                           
+      53                <div className="product-detail__variants">
+      52 -                {variants.map(v => (                           
+      54 +                {group.map(v => (                              
+      55                    <span
+      56                      key={v.id}
+      57                      className={`variant-pill${v.stock === 0 ? '
+           variant-pill--oos' : ''}`}
+      58                    >
+      57 -                    {v.options.size}                           
+      59 +                    {v.options[key]}                           
+      60                      {v.stock === 0 && <span className="variant-
+          pill__oos-label"> (Out of stock)</span>}
+      61                      {v.stock > 0 && <span className="variant-pi
+          ll__stock">{v.stock} left</span>}
+      62                    </span>
+      63                  ))}
+      64                </div>
+      65              </div>
+      64 -          )}                                                   
+      66 +          ))}                                                  
+      67  
+      68            {attributes && Object.keys(attributes).length > 0 && 
+          (
+      69              <div>
+
+⏺ Bash(npm test -- --run --reporter=verbose ProductDetail 2>&1 | tail -10)
+  ⎿      135|     expect(screen.getByText('black')).toBeTruthy();
+         136|     expect(screen.getByText('white')).toBeTruthy();
+     … +7 lines (ctrl+o to expand)
+
+⏺ Bash(npm test -- --run --reporter=verbose ProductDetail 2>&1 | grep -A 30
+      "FAIL\|AssertionError\|Expected\|Received\|getByText")
+  ⎿   FAIL  src/components/ProductDetail/ProductDetail.test.jsx > ProductDe
+     tail > renders variant values under correct type section
+     TestingLibraryElementError: Found multiple elements with the text: M
+     … +28 lines (ctrl+o to expand)
+
+⏺ The base product fixture has attributes: { size: 'M' } causing a conflict. Fix
+   the test to strip that attribute.
+
+⏺ Update(frontend/src/components/ProductDetail/ProductDetail.test.jsx)
+  ⎿  Added 3 lines, removed 2 lines
+      124    test('renders variant values under correct type section', ()
+            => {
+      125      const productWithMultiTypes = {
+      126        ...product,
+      127 +      attributes: {},                                         
+      128        variants: [
+      128 -        { id: 'v1', options: { size: 'M' }, stock: 20 },      
+      129 +        { id: 'v1', options: { size: 'XL' }, stock: 20 },     
+      130          { id: 'v2', options: { colour: 'black' }, stock: 30 },
+      131          { id: 'v3', options: { colour: 'white' }, stock: 15 },
+      132        ],
+      133      };
+      134      render(<ProductDetail product={productWithMultiTypes} onCl
+           ose={vi.fn()} />);
+      134 -    expect(screen.getByText('M')).toBeTruthy();               
+      135 +    expect(screen.getByText('XL')).toBeTruthy();              
+      136      expect(screen.getByText('black')).toBeTruthy();
+      137      expect(screen.getByText('white')).toBeTruthy();
+      138    });
+
+⏺ Bash(npm test -- --run --reporter=verbose ProductDetail 2>&1 | tail -8)
+  ⎿   ✓ src/components/ProductDetail/ProductDetail.test.jsx > ProductDetail
+      > renders separate section per variant type
+      ✓ src/components/ProductDetail/ProductDetail.test.jsx > ProductDetail
+     … +7 lines (ctrl+o to expand)
+
+⏺ 15/15 green. Now the big one — ProductForm. Write failing tests first.
+
+⏺ Update(frontend/src/components/ProductForm/ProductForm.test.jsx)
+  ⎿  Added 93 lines, removed 21 lines
+       57      variants: [
+       58        { id: 'v1', options: { size: 'M' }, stock: 20 },
+       59        { id: 'v2', options: { size: 'L' }, stock: 15 },
+       60 +      { id: 'v3', options: { colour: 'black' }, stock: 30 },  
+       61      ],
+       62    };
+       63  
+       63 -  it('renders existing variants in Variants section', () => { 
+       64 +  it('renders existing variant types with their values', () =>
+          + {                                                            
+       65      render(<ProductForm product={productWithVariants} brands={
+           brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+       66 +    // type keys shown in type key inputs                     
+       67 +    const typeInputs = screen.getAllByPlaceholderText('Variant
+          + type (e.g. colour, size)');                                  
+       68 +    const typeKeys = typeInputs.map(i => i.value);            
+       69 +    expect(typeKeys).toContain('size');                       
+       70 +    expect(typeKeys).toContain('colour');                     
+       71 +    // values shown in value inputs                           
+       72      expect(screen.getByDisplayValue('M')).toBeTruthy();
+       73      expect(screen.getByDisplayValue('L')).toBeTruthy();
+       67 -    expect(screen.getByDisplayValue('20')).toBeTruthy();      
+       74 +    expect(screen.getByDisplayValue('black')).toBeTruthy();   
+       75    });
+       76  
+       70 -  it('Add Size button appends empty variant row', () => {     
+       77 +  it('Add Variant Type button appends an empty type row', () =
+          +> {                                                           
+       78      render(<ProductForm product={null} brands={brandsList} onS
+           ave={vi.fn()} onClose={vi.fn()} />);
+       72 -    fireEvent.click(screen.getByText('+ Add Size'));          
+       73 -    const sizeInputs = screen.getAllByPlaceholderText('Size (e
+          -.g. M)');                                                     
+       74 -    expect(sizeInputs).toHaveLength(1);                       
+       79 +    fireEvent.click(screen.getByText('+ Add Variant Type'));  
+       80 +    expect(screen.getAllByPlaceholderText('Variant type (e.g. 
+          +colour, size)')).toHaveLength(1);                             
+       81    });
+       82  
+       77 -  it('updating size input reflects in state', () => {         
+       83 +  it('Add Value button appends an empty value row to a type', 
+          +() => {                                                       
+       84      render(<ProductForm product={null} brands={brandsList} onS
+           ave={vi.fn()} onClose={vi.fn()} />);
+       79 -    fireEvent.click(screen.getByText('+ Add Size'));          
+       80 -    const sizeInput = screen.getByPlaceholderText('Size (e.g. 
+          -M)');                                                         
+       81 -    fireEvent.change(sizeInput, { target: { value: 'XL' } }); 
+       82 -    expect(sizeInput.value).toBe('XL');                       
+       85 +    fireEvent.click(screen.getByText('+ Add Variant Type'));  
+       86 +    fireEvent.click(screen.getByText('+ Add Value'));         
+       87 +    expect(screen.getAllByPlaceholderText('Value (e.g. blue)')
+          +).toHaveLength(1);                                            
+       88    });
+       89  
+       85 -  it('removing a variant row removes it from the form', () => 
+          -{                                                             
+       90 +  it('updating a value input reflects in state', () => {      
+       91 +    render(<ProductForm product={null} brands={brandsList} onS
+          +ave={vi.fn()} onClose={vi.fn()} />);                          
+       92 +    fireEvent.click(screen.getByText('+ Add Variant Type'));  
+       93 +    fireEvent.click(screen.getByText('+ Add Value'));         
+       94 +    const valueInput = screen.getByPlaceholderText('Value (e.g
+          +. blue)');                                                    
+       95 +    fireEvent.change(valueInput, { target: { value: 'red' } })
+          +;                                                             
+       96 +    expect(valueInput.value).toBe('red');                     
+       97 +  });                                                         
+       98 +                                                              
+       99 +  it('removing a value row removes it from the type', () => { 
+      100      render(<ProductForm product={productWithVariants} brands={
+           brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+       87 -    const removeButtons = screen.getAllByRole('button', { name
+          -: /remove variant/i });                                       
+       88 -    fireEvent.click(removeButtons[0]);                        
+       89 -    const sizeInputs = screen.getAllByDisplayValue(/[A-Z]/);  
+       90 -    expect(sizeInputs.some(input => input.value === 'M')).toBe
+          -(false);                                                      
+      101 +    const removeValueBtns = screen.getAllByRole('button', { na
+          +me: /remove variant.*value/i });                              
+      102 +    const initialValues = screen.getAllByPlaceholderText('Valu
+          +e (e.g. blue)');                                              
+      103 +    const countBefore = initialValues.length;                 
+      104 +    fireEvent.click(removeValueBtns[0]);                      
+      105 +    expect(screen.getAllByPlaceholderText('Value (e.g. blue)')
+          +).toHaveLength(countBefore - 1);                              
+      106    });
+      107  
+       93 -  it('handleSubmit includes variants in onSave payload', async
+          - () => {                                                      
+      108 +  it('removing a variant type removes it entirely', () => {   
+      109 +    render(<ProductForm product={productWithVariants} brands={
+          +brandsList} onSave={vi.fn()} onClose={vi.fn()} />);           
+      110 +    const typesBefore = screen.getAllByPlaceholderText('Varian
+          +t type (e.g. colour, size)').length;                          
+      111 +    fireEvent.click(screen.getAllByRole('button', { name: /rem
+          +ove variant type/i })[0]);                                    
+      112 +    expect(screen.getAllByPlaceholderText('Variant type (e.g. 
+          +colour, size)')).toHaveLength(typesBefore - 1);               
+      113 +  });                                                         
+      114 +                                                              
+      115 +  it('handleSubmit flattens variant types into backend variant
+          + array', () => {                                              
+      116      const onSave = vi.fn();
+      117      render(<ProductForm product={productWithVariants} brands={
+           brandsList} onSave={onSave} onClose={vi.fn()} />);
+      118      fireEvent.submit(screen.getByRole('form'));
+     ...
+      120        expect.objectContaining({
+      121          variants: expect.arrayContaining([
+      122            expect.objectContaining({ options: { size: 'M' }, st
+           ock: 20 }),
+      123 +          expect.objectContaining({ options: { size: 'L' }, st
+          +ock: 15 }),                                                   
+      124 +          expect.objectContaining({ options: { colour: 'black'
+          + }, stock: 30 }),                                             
+      125          ]),
+      126        })
+      127      );
+      128    });
+      129  
+      106 -  it('handleSubmit skips variant rows with empty size', async 
+          -() => {                                                       
+      130 +  it('handleSubmit skips variant types with empty key', () => 
+          +{                                                             
+      131      const onSave = vi.fn();
+      132      render(<ProductForm product={null} brands={brandsList} onS
+           ave={onSave} onClose={vi.fn()} />);
+      109 -    fireEvent.click(screen.getByText('+ Add Size'));          
+      110 -    // Fill required fields so submit fires onSave            
+      133 +    fireEvent.click(screen.getByText('+ Add Variant Type'));  
+      134 +    fireEvent.click(screen.getByText('+ Add Value'));         
+      135 +    // leave type key blank, fill required product fields     
+      136      fireEvent.change(screen.getByLabelText(/name/i), { target:
+            { value: 'New Product' } });
+      137      fireEvent.change(screen.getByLabelText(/price/i), { target
+           : { value: '10' } });
+      138      fireEvent.change(screen.getByLabelText(/category/i), { tar
+           get: { value: 'apparel' } });
+      139      fireEvent.change(screen.getByLabelText('Stock'), { target:
+            { value: '0' } });
+      140      fireEvent.submit(screen.getByRole('form'));
+      141 +    expect(onSave).toHaveBeenCalledWith(expect.objectContainin
+          +g({ variants: [] }));                                         
+      142 +  });                                                         
+      143 +                                                              
+      144 +  it('handleSubmit skips value rows with empty value string', 
+          +() => {                                                       
+      145 +    const onSave = vi.fn();                                   
+      146 +    render(<ProductForm product={null} brands={brandsList} onS
+          +ave={onSave} onClose={vi.fn()} />);                           
+      147 +    fireEvent.click(screen.getByText('+ Add Variant Type'));  
+      148 +    const typeInput = screen.getByPlaceholderText('Variant typ
+          +e (e.g. colour, size)');                                      
+      149 +    fireEvent.change(typeInput, { target: { value: 'colour' } 
+          +});                                                           
+      150 +    fireEvent.click(screen.getByText('+ Add Value'));         
+      151 +    // leave value input blank                                
+      152 +    fireEvent.change(screen.getByLabelText(/name/i), { target:
+          + { value: 'New Product' } });                                 
+      153 +    fireEvent.change(screen.getByLabelText(/price/i), { target
+          +: { value: '10' } });                                         
+      154 +    fireEvent.change(screen.getByLabelText(/category/i), { tar
+          +get: { value: 'apparel' } });                                 
+      155 +    fireEvent.change(screen.getByLabelText('Stock'), { target:
+          + { value: '0' } });                                           
+      156 +    fireEvent.submit(screen.getByRole('form'));               
+      157 +    expect(onSave).toHaveBeenCalledWith(expect.objectContainin
+          +g({ variants: [] }));                                         
+      158 +  });                                                         
+      159 +                                                              
+      160 +  it('handleSubmit handles multiple variant types correctly', 
+          +() => {                                                       
+      161 +    const onSave = vi.fn();                                   
+      162 +    render(<ProductForm product={null} brands={brandsList} onS
+          +ave={onSave} onClose={vi.fn()} />);                           
+      163 +    // add size type                                          
+      164 +    fireEvent.click(screen.getByText('+ Add Variant Type'));  
+      165 +    const typeInputs = screen.getAllByPlaceholderText('Variant
+          + type (e.g. colour, size)');                                  
+      166 +    fireEvent.change(typeInputs[0], { target: { value: 'size' 
+          +} });                                                         
+      167 +    fireEvent.click(screen.getAllByText('+ Add Value')[0]);   
+      168 +    const valueInputs = screen.getAllByPlaceholderText('Value 
+          +(e.g. blue)');                                                
+      169 +    fireEvent.change(valueInputs[0], { target: { value: 'M' } 
+          +});                                                           
+      170 +    // add colour type                                        
+      171 +    fireEvent.click(screen.getByText('+ Add Variant Type'));  
+      172 +    const typeInputs2 = screen.getAllByPlaceholderText('Varian
+          +t type (e.g. colour, size)');                                 
+      173 +    fireEvent.change(typeInputs2[1], { target: { value: 'colou
+          +r' } });                                                      
+      174 +    fireEvent.click(screen.getAllByText('+ Add Value')[1]);   
+      175 +    const valueInputs2 = screen.getAllByPlaceholderText('Value
+          + (e.g. blue)');                                               
+      176 +    fireEvent.change(valueInputs2[1], { target: { value: 'blue
+          +' } });                                                       
+      177 +    // fill required fields and submit                        
+      178 +    fireEvent.change(screen.getByLabelText(/name/i), { target:
+          + { value: 'New Product' } });                                 
+      179 +    fireEvent.change(screen.getByLabelText(/price/i), { target
+          +: { value: '10' } });                                         
+      180 +    fireEvent.change(screen.getByLabelText(/category/i), { tar
+          +get: { value: 'apparel' } });                                 
+      181 +    fireEvent.change(screen.getByLabelText('Stock'), { target:
+          + { value: '0' } });                                           
+      182 +    fireEvent.submit(screen.getByRole('form'));               
+      183      expect(onSave).toHaveBeenCalledWith(
+      117 -      expect.objectContaining({ variants: [] })               
+      184 +      expect.objectContaining({                               
+      185 +        variants: expect.arrayContaining([                    
+      186 +          expect.objectContaining({ options: { size: 'M' } }),
+      187 +          expect.objectContaining({ options: { colour: 'blue' 
+          +} }),                                                         
+      188 +        ]),                                                   
+      189 +      })                                                      
+      190      );
+      191    });
+      192  });
+
+⏺ Bash(npm test -- --run --reporter=verbose ProductForm 2>&1 | tail -15)
+  ⎿   ❯ src/components/ProductForm/ProductForm.test.jsx:164:28
+         162|     render(<ProductForm product={null} brands={brandsList} on
+     Save={onS…
+     … +15 lines (ctrl+o to expand)
+
+⏺ 10 failing (all new variant tests). Now rewrite ProductForm.jsx to make them
+  green.
+
+⏺ Update(frontend/src/components/ProductForm/ProductForm.jsx)
+  ⎿  Added 12 lines, removed 3 lines
+       1  import { useState } from 'react';
+       2  import './ProductForm.css';
+       3  
+       4 +function buildVariantTypes(variants = []) {                    
+       5 +  const typeMap = new Map();                                   
+       6 +  for (const v of variants) {                                  
+       7 +    for (const [key, val] of Object.entries(v.options || {})) {
+       8 +      if (!typeMap.has(key)) typeMap.set(key, []);             
+       9 +      typeMap.get(key).push({ id: v.id, value: String(val), sto
+         +ck: String(v.stock) });                                        
+      10 +    }                                                          
+      11 +  }                                                            
+      12 +  return [...typeMap.entries()].map(([key, values]) => ({ key, 
+         +values }));                                                    
+      13 +}                                                              
+      14 +                                                               
+      15  function buildInitialState(product) {
+      16    return {
+      17      name: product?.name ?? '',
+     ...
+      26      attributes: product?.attributes
+      27        ? Object.entries(product.attributes).map(([key, value]) =
+          > ({ key, value: String(value) }))
+      28        : [],
+      18 -    variants: product?.variants                                
+      19 -      ? product.variants.map(v => ({ id: v.id, size: v.options?
+         -.size || '', stock: String(v.stock) }))                        
+      20 -      : [],                                                    
+      29 +    variantTypes: buildVariantTypes(product?.variants),        
+      30    };
+      31  }
+      32  
+
+⏺ Now replace the variant handlers and the submit logic:
+
+⏺ Update(frontend/src/components/ProductForm/ProductForm.jsx)
+  ⎿  Added 34 lines, removed 8 lines
+       56      }));
+       57    }
+       58  
+       59 -  function addVariantRow() {                                  
+       60 -    setFields(prev => ({ ...prev, variants: [...prev.variants,
+          - { id: null, size: '', stock: '0' }] }));                     
+       59 +  function addVariantType() {                                 
+       60 +    setFields(prev => ({ ...prev, variantTypes: [...prev.varia
+          +ntTypes, { key: '', values: [] }] }));                        
+       61    }
+       62  
+       63 -  function updateVariantRow(index, key, value) {              
+       63 +  function updateVariantTypeKey(typeIdx, key) {               
+       64      setFields(prev => {
+       65 -      const next = [...prev.variants];                        
+       66 -      next[index] = { ...next[index], [key]: value };         
+       67 -      return { ...prev, variants: next };                     
+       65 +      const next = [...prev.variantTypes];                    
+       66 +      next[typeIdx] = { ...next[typeIdx], key };              
+       67 +      return { ...prev, variantTypes: next };                 
+       68      });
+       69    }
+       70  
+       71 -  function removeVariantRow(index) {                          
+       71 +  function removeVariantType(typeIdx) {                       
+       72      setFields(prev => ({
+       73        ...prev,
+       74 -      variants: prev.variants.filter((_, i) => i !== index),  
+       74 +      variantTypes: prev.variantTypes.filter((_, i) => i !== t
+          +ypeIdx),                                                      
+       75      }));
+       76    }
+       77  
+       78 +  function addVariantValue(typeIdx) {                         
+       79 +    setFields(prev => {                                       
+       80 +      const next = [...prev.variantTypes];                    
+       81 +      next[typeIdx] = { ...next[typeIdx], values: [...next[typ
+          +eIdx].values, { id: null, value: '', stock: '0' }] };         
+       82 +      return { ...prev, variantTypes: next };                 
+       83 +    });                                                       
+       84 +  }                                                           
+       85 +                                                              
+       86 +  function updateVariantValue(typeIdx, valIdx, field, val) {  
+       87 +    setFields(prev => {                                       
+       88 +      const types = [...prev.variantTypes];                   
+       89 +      const values = [...types[typeIdx].values];              
+       90 +      values[valIdx] = { ...values[valIdx], [field]: val };   
+       91 +      types[typeIdx] = { ...types[typeIdx], values };         
+       92 +      return { ...prev, variantTypes: types };                
+       93 +    });                                                       
+       94 +  }                                                           
+       95 +                                                              
+       96 +  function removeVariantValue(typeIdx, valIdx) {              
+       97 +    setFields(prev => {                                       
+       98 +      const types = [...prev.variantTypes];                   
+       99 +      types[typeIdx] = { ...types[typeIdx], values: types[type
+          +Idx].values.filter((_, i) => i !== valIdx) };                 
+      100 +      return { ...prev, variantTypes: types };                
+      101 +    });                                                       
+      102 +  }                                                           
+      103 +                                                              
+      104    function handleSubmit(e) {
+      105      e.preventDefault();
+      106      const formData = {
+
+⏺ Now update the handleSubmit variants line:
+
+⏺ Update(frontend/src/components/ProductForm/ProductForm.jsx)
+  ⎿  Added 10 lines, removed 3 lines
+      121            .filter(a => a.key.trim() !== '')
+      122            .map(a => [a.key.trim(), a.value])
+      123        ),
+      124 -      variants: fields.variants                               
+      125 -        .filter(v => v.size.trim() !== '')                    
+      126 -        .map(v => ({ options: { size: v.size.trim() }, stock: 
+          -parseInt(v.stock, 10) || 0 })),                               
+      124 +      variants: fields.variantTypes                           
+      125 +        .filter(type => type.key.trim())                      
+      126 +        .flatMap(type =>                                      
+      127 +          type.values                                         
+      128 +            .filter(v => v.value.trim())                      
+      129 +            .map(v => ({                                      
+      130 +              options: { [type.key.trim()]: v.value.trim() }, 
+      131 +              stock: parseInt(v.stock, 10) || 0,              
+      132 +            }))                                               
+      133 +        ),                                                    
+      134      };
+      135      onSave(formData);
+      136    }
+
+⏺ Now replace the variants JSX section:
+
+⏺ Update(frontend/src/components/ProductForm/ProductForm.jsx)
+  ⎿  Added 51 lines, removed 22 lines
+      277              + Add Attribute
+      278            </button>
+      279  
+      280 -          <div className="form-section-title">Variants (Sizes)
+          -</div>                                                        
+      281 -          {fields.variants.map((v, i) => (                    
+      282 -            <div key={i} className="variant-row">             
+      283 -              <input                                          
+      284 -                type="text"                                   
+      285 -                placeholder="Size (e.g. M)"                   
+      286 -                aria-label={`variant ${i} size`}              
+      287 -                value={v.size}                                
+      288 -                onChange={e => updateVariantRow(i, 'size', e.t
+          -arget.value)}                                                 
+      289 -              />                                              
+      290 -              <input                                          
+      291 -                type="number"                                 
+      292 -                min="0"                                       
+      293 -                placeholder="Stock"                           
+      294 -                aria-label={`variant ${i} stock`}             
+      295 -                value={v.stock}                               
+      296 -                onChange={e => updateVariantRow(i, 'stock', e.
+          -target.value)}                                                
+      297 -              />                                              
+      298 -              <button type="button" className="btn-remove-attr
+          -" aria-label={`remove variant ${i}`} onClick={() => removeVari
+          -antRow(i)}>                                                   
+      299 -                &times;                                       
+      280 +          <div className="form-section-title">Variants</div>  
+      281 +          {fields.variantTypes.map((type, i) => (             
+      282 +            <div key={i} className="variant-type-row">        
+      283 +              <div className="variant-type-header">           
+      284 +                <input                                        
+      285 +                  type="text"                                 
+      286 +                  placeholder="Variant type (e.g. colour, size
+          +)"                                                            
+      287 +                  aria-label={`variant type ${i} key`}        
+      288 +                  value={type.key}                            
+      289 +                  onChange={e => updateVariantTypeKey(i, e.tar
+          +get.value)}                                                   
+      290 +                />                                            
+      291 +                <button                                       
+      292 +                  type="button"                               
+      293 +                  className="btn-remove-attr"                 
+      294 +                  aria-label={`remove variant type ${i}`}     
+      295 +                  onClick={() => removeVariantType(i)}        
+      296 +                >                                             
+      297 +                  Remove                                      
+      298 +                </button>                                     
+      299 +              </div>                                          
+      300 +              {type.values.map((v, j) => (                    
+      301 +                <div key={j} className="attr-row variant-value
+          +-row">                                                        
+      302 +                  <input                                      
+      303 +                    type="text"                               
+      304 +                    placeholder="Value (e.g. blue)"           
+      305 +                    aria-label={`variant type ${i} value ${j}`
+          +}                                                             
+      306 +                    value={v.value}                           
+      307 +                    onChange={e => updateVariantValue(i, j, 'v
+          +alue', e.target.value)}                                       
+      308 +                  />                                          
+      309 +                  <input                                      
+      310 +                    type="number"                             
+      311 +                    min="0"                                   
+      312 +                    placeholder="Stock"                       
+      313 +                    aria-label={`variant type ${i} stock ${j}`
+          +}                                                             
+      314 +                    value={v.stock}                           
+      315 +                    onChange={e => updateVariantValue(i, j, 's
+          +tock', e.target.value)}                                       
+      316 +                  />                                          
+      317 +                  <button                                     
+      318 +                    type="button"                             
+      319 +                    className="btn-remove-attr"               
+      320 +                    aria-label={`remove variant type ${i} valu
+          +e ${j}`}                                                      
+      321 +                    onClick={() => removeVariantValue(i, j)}  
+      322 +                  >                                           
+      323 +                    &times;                                   
+      324 +                  </button>                                   
+      325 +                </div>                                        
+      326 +              ))}                                             
+      327 +              <button type="button" className="btn-add-attr" o
+          +nClick={() => addVariantValue(i)}>                            
+      328 +                + Add Value                                   
+      329                </button>
+      330              </div>
+      331            ))}
+      303 -          <button type="button" className="btn-add-attr" onCli
+          -ck={addVariantRow}>                                           
+      304 -            + Add Size                                        
+      332 +          <button type="button" className="btn-add-attr" onCli
+          +ck={addVariantType}>                                          
+      333 +            + Add Variant Type                                
+      334            </button>
+      335  
+      336            <div className="form-actions">
+
+⏺ Bash(npm test -- --run --reporter=verbose ProductForm 2>&1 | tail -20)
+  ⎿   ✓ src/components/ProductForm/ProductForm.test.jsx > ProductForm > ren
+     ders all required fields
+      ✓ src/components/ProductForm/ProductForm.test.jsx > ProductForm > cal
+     … +26 lines (ctrl+o to expand)
+⏺ All 14 pass. Now run the full test suite.
+
+⏺ Bash(cd /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend
+       && npm test -- --silent 2>&1 | grep -E "Tests:|Test Suites:|PASS|FAIL" |
+      tail -15)
+  ⎿  PASS tests/unit/product.test.js
+     PASS tests/unit/validate.test.js
+     PASS tests/unit/brandStore.test.js
+     … +5 lines (ctrl+o to expand)
+
+⏺ Bash(npm test -- --run 2>&1 | tail -10)
+  ⎿  > ecom-backend@0.1.0 test
+     > jest --passWithNoTests --run
+     … +6 lines (ctrl+o to expand)
+
+⏺ Bash(cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/frontend &&
+       npm test -- --run 2>&1 | tail -10)
+  ⎿   ✓ src/components/ProductForm/ProductForm.test.jsx  (14 tests) 1616ms
+      ✓ src/components/ProductList/ProductList.test.jsx  (5 tests) 178ms
+      ✓ src/App.test.jsx  (2 tests) 234ms
+     … +7 lines (ctrl+o to expand)
+
+⏺ 139 backend + 84 frontend = 223/223. Now add CSS for the new variant type
+  structure.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+⏺ Update(frontend/src/components/ProductForm/ProductForm.css)
+  ⎿  Added 14 lines, removed 10 lines
+      189    color: var(--color-text);
+      190  }
+      191  
+      192 -.variant-row {                                                
+      192 +.variant-type-row {                                           
+      193 +  border: 1px solid var(--color-border);                      
+      194 +  border-radius: var(--radius-input);                         
+      195 +  padding: 12px;                                              
+      196 +  margin-bottom: 12px;                                        
+      197 +  background: var(--color-bg);                                
+      198 +}                                                             
+      199 +                                                              
+      200 +.variant-type-header {                                        
+      201    display: flex;
+      202    gap: 8px;
+      203    align-items: center;
+      204    margin-bottom: 8px;
+      205  }
+      198 -.variant-row input[type="text"] {                             
+      206 +                                                              
+      207 +.variant-type-header input[type="text"] {                     
+      208    flex: 1;
+      209    padding: 8px 12px;
+      210    border: 1px solid var(--color-border);
+     ...
+      213    color: var(--color-text);
+      214    background: var(--color-bg);
+      215  }
+      207 -.variant-row input[type="number"] {                           
+      208 -  width: 80px;                                                
+      209 -  padding: 8px 12px;                                          
+      210 -  border: 1px solid var(--color-border);                      
+      211 -  border-radius: var(--radius-input);                         
+      212 -  font-size: 14px;                                            
+      213 -  color: var(--color-text);                                   
+      214 -  background: var(--color-bg);                                
+      216 +                                                              
+      217 +.variant-value-row {                                          
+      218 +  margin-left: 8px;                                           
+      219  }
+
+⏺ Now let me do a visual check with the webapp-testing skill.
+
+⏺ Skill(webapp-testing)
+  ⎿  Successfully loaded skill
+
+⏺ Bash(cd /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/.claude
+      /skills/webapp-testing && python scripts/with_server.py --help 2>&1 | head
+       -40)
+  ⎿  (eval):1: command not found: python
+
+⏺ Bash(python3 scripts/with_server.py --help 2>&1 | head -40)
+  ⎿  usage: with_server.py [-h] --server SERVERS --port PORTS [--timeout TI
+     MEOUT]
+                           ...
+     … +11 lines (ctrl+o to expand)
+
+⏺ Write(/tmp/test_v5_dynamic_variants.py)
+  ⎿  Wrote 178 lines to ../../../../../tmp/test_v5_dynamic_variants.py
+       1 from playwright.sync_api import sync_playwright
+       2 import sys
+       3 
+       4 def test_dynamic_variants():
+       5     with sync_playwright() as p:
+       6         browser = p.chromium.launch(headless=True)
+       7         page = browser.new_page()
+       8         results = []
+       9 
+      10         try:
+     … +224 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  Error: Exit code 1
+     Traceback (most recent call last):
+       File "/tmp/test_v5_dynamic_variants.py", line 1, in <module>
+         from playwright.sync_api import sync_playwright
+     ModuleNotFoundError: No module named 'playwright'
+     Starting server 1/2: cd 
+     /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend && 
+     npm start
+     Waiting for server on port 3001...
+     Server ready on port 3001
+     Starting server 2/2: cd 
+     /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/frontend && 
+     npm run dev
+     Waiting for server on port 5173...
+     … +10 lines (ctrl+o to expand)
+
+⏺ Bash(pip3 install playwright 2>&1 | tail -3 && python3 -m playwright install
+      chromium 2>&1 | tail -3)
+  ⎿  [notice] A new release of pip is available: 23.2.1 -> 26.1.1
+     [notice] To update, run: pip3 install --upgrade pip
+  ⎿  (timeout 2m)
+
+⏺ Bash(pip3 install playwright -q && python3 -m playwright install chromium
+      --quiet 2>&1 | tail -5)
+  ⎿  [notice] A new release of pip is available: 23.2.1 -> 26.1.1
+     [notice] To update, run: pip3 install --upgrade pip
+     error: unknown option '--quiet'
+
+⏺ Bash(python3 -c "from playwright.sync_api import sync_playwright; print('ok')"
+       2>&1)
+  ⎿  ok
+
+⏺ Bash(python3 -m playwright install chromium 2>&1 | tail -5)
+  ⎿  (No output)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  Error: Exit code 1
+
+     === V5 Dynamic Variants Test Results ===
+     ✅ 1. Catalog loaded
+     ❌ ERROR: Locator.click: Timeout 30000ms exceeded.
+     Call log:
+       - waiting for locator("[data-category=\"apparel\"], .category-btn, 
+     .filter-btn").first.first
+
+
+     1 check(s) failed
+     … +15 lines (ctrl+o to expand)
+
+⏺ Write(/tmp/inspect_catalog.py)
+  ⎿  Wrote 18 lines to ../../../../../tmp/inspect_catalog.py
+       2 from playwright.sync_api import sync_playwright
+       3 with sync_playwright() as p:
+       4     browser = p.chromium.launch(headless=True)
+       5     page = browser.new_page()
+       6     page.goto('http://localhost:5173')
+       7     page.wait_for_load_state('networkidle')
+       8     page.screenshot(path='/tmp/inspect_catalog.png', full_page=T
+         rue)
+       9     # Find all buttons
+      10     buttons = page.locator('button').all()
+     … +11 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿    '×' | class=search-filter__close
+       'Reset' | class=search-filter__reset
+       '≡ Filters' | class=filter-toggle
+     … +25 lines (ctrl+o to expand)
+  ⎿  (timeout 1m 30s)
+⏺ Write(/tmp/inspect_catalog2.py)
+  ⎿  Wrote 24 lines to ../../../../../tmp/inspect_catalog2.py
+       1 from playwright.sync_api import sync_playwright
+       2 
+       3 with sync_playwright() as p:
+       4     browser = p.chromium.launch(headless=True)
+       5     page = browser.new_page()
+       6     page.goto('http://localhost:5173')
+       7     page.wait_for_load_state('networkidle')
+       8 
+       9     # Find all clickable elements with text "apparel"
+      10     apparel_els = page.locator('text=apparel').all()
+     … +18 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  === Elements containing 'apparel' ===
+       tag=OPTION class= role=
+       tag=DIV class=product-card__meta role=
+     … +31 lines (ctrl+o to expand)
+  ⎿  (timeout 1m 30s)
+
+⏺ Write(/tmp/inspect_catalog3.py)
+  ⎿  Wrote 22 lines to ../../../../../tmp/inspect_catalog3.py
+       1 from playwright.sync_api import sync_playwright
+       2 
+       3 with sync_playwright() as p:
+       4     browser = p.chromium.launch(headless=True)
+       5     page = browser.new_page()
+       6     page.goto('http://localhost:5173')
+       7     page.wait_for_load_state('networkidle')
+       8 
+       9     # The sidebar has a CATEGORY section with a select
+      10     # Find category select
+     … +14 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  Found 2 select elements
+       Select 0: id=category-select, class=search-filter__select
+       Select 1: id=brand-select, class=search-filter__select
+     … +16 lines (ctrl+o to expand)
+  ⎿  (timeout 1m 30s)
+
+⏺ Write(/tmp/test_v5_final.py)
+  ⎿  Wrote 169 lines to ../../../../../tmp/test_v5_final.py
+       1 from playwright.sync_api import sync_playwright
+       2 import sys
+       3 
+       4 def run():
+       5     with sync_playwright() as p:
+       6         browser = p.chromium.launch(headless=True)
+       7         page = browser.new_page()
+       8         results = []
+       9 
+      10         try:
+     … +216 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  Sidebar text snippet: Filters
+     CATEGORY
+     All categories
+     … +57 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ The colour variants aren't showing. I need to check the store's create()
+  function to see if it processes initial variants.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Write(/tmp/debug_api.py)
+  ⎿  Wrote 21 lines to ../../../../../tmp/debug_api.py
+       2 import urllib.request, json
+       3 # Check product data via API
+       4 req = urllib.request.urlopen('http://localhost:3001/api/v1/produ
+         cts?category=apparel')
+       5 data = json.loads(req.read())
+         ))oducts = data.get('data', {}).get('items', data.get('data', []
+       7 
+       8 # Find Graphic Tee
+       9 for p in products:
+      10     if 'Graphic Tee' in p.get('name', ''):
+     … +14 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  === Slim Fit Graphic Tee ===
+     Variants: [
+       {
+     … +46 lines (ctrl+o to expand)
+
+⏺ The seed data still has color: 'black' — my edit may not have worked
+  correctly. Let me check.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ There might be a stale server process. Let me kill it and recheck.
+
+⏺ Bash(lsof -ti :3001 | xargs kill -9 2>/dev/null; echo "port cleared")
+  ⎿  port cleared
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  === Slim Fit Graphic Tee ===
+     Variants: [
+       {
+     … +45 lines (ctrl+o to expand)
+
+⏺ The API is correct — colour variants are there. The previous test used a stale
+   server. Let me kill the stale frontend process too and run the full test
+  fresh.
+
+⏺ Bash(lsof -ti :3001 :5173 | xargs kill -9 2>/dev/null; echo "ports cleared")
+  ⎿  lsof: status error on :5173: No such file or directory
+     lsof 4.91
+      latest revision: ftp://lsof.itap.purdue.edu/pub/tools/unix/lsof/
+     … +9 lines (ctrl+o to expand)
+
+⏺ Bash(lsof -ti tcp:3001 | xargs kill -9 2>/dev/null; echo "done")
+  ⎿  done
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  Sidebar text snippet: Filters
+     CATEGORY
+     All categories
+     … +56 lines (ctrl+o to expand)
+  ⎿  (timeout 2m 30s)
+⏺ Good progress — catalog and card are working. Let me check the screenshots to
+  debug the detail modal and form issues.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ The form check is a test script issue (5b/5c/6a/6b all pass, confirming the
+  Variants section works). Let me check the product detail screenshot.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ The card and catalog look great. Let me write a focused test for detail modal
+  and admin edit.
+
+⏺ Write(/tmp/test_detail_edit.py)
+  ⎿  Wrote 89 lines to ../../../../../tmp/test_detail_edit.py
+       1 from playwright.sync_api import sync_playwright
+       2 
+       3 with sync_playwright() as p:
+       4     browser = p.chromium.launch(headless=True)
+       5     page = browser.new_page()
+       6     results = []
+       7 
+       8     try:
+       9         # Open catalog and select apparel
+      10         page.goto('http://localhost:5173')
+     … +94 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  Tee locator count: 1
+     Overlay count: 1, Detail count: 1
+     Detail text (first 500):
+     … +85 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+⏺ The functionality is fully working. The test was checking wrong case ('Size'
+  vs 'SIZE' from CSS transform) and inner_text() doesn't include input values.
+  The actual output is perfect:
+
+  - Detail: shows SIZE section with XS/S/M/L/XL/XXL values + COLOUR section with
+   black/white
+  - Edit form: shows two variant type blocks (6 size values + 2 colour values) +
+   "+ Add Variant Type"
+
+  Let me grab the screenshots and verify visually.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ The form is correctly populated. The Variants section is below — let me take a
+   full-page screenshot to confirm.
+
+⏺ Write(/tmp/screenshot_edit_full.py)
+  ⎿  Wrote 34 lines to ../../../../../tmp/screenshot_edit_full.py
+       2 from playwright.sync_api import sync_playwright
+       3 with sync_playwright() as p:
+       4     browser = p.chromium.launch(headless=True)
+       5     page = browser.new_page(viewport={'width': 1280, 'height': 9
+         00})
+       6     page.goto('http://localhost:5173/admin')
+       7     page.wait_for_load_state('networkidle')
+       8     page.wait_for_timeout(500)
+       9 
+      10     # Click Edit for Graphic Tee
+     … +28 lines (ctrl+o to expand)
+
+⏺ Bash(python3 scripts/with_server.py \
+        --server "cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend &&
+      npm start" --port 3001 \…)
+  ⎿  Screenshot taken: /tmp/edit_tee_variants_scrolled.png
+     Detail screenshot taken: /tmp/product_detail_full.png
+  ⎿  (timeout 2m)
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Everything looks exactly right:
+  - Edit form: size type with XS/S/M/L/XL/XXL values + colour type with
+  black/white values + "Remove" and "+ Add Value" buttons + "+ Add Variant Type"
+  - Product detail: SIZE and COLOUR sections with their values
+
+  All functionality confirmed. Now run the full test suite and commit.
+
+⏺ Bash(cd /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/backend
+       && npm test -- --silent 2>&1 | grep "Tests:" && cd ../frontend && npm
+      test -- --run 2>…)
+  ⎿  Tests:       139 passed, 139 total
+           Tests  84 passed (84)
+  ⎿  (timeout 2m)
+
+⏺ 139 backend + 84 frontend = 223/223 green. Now commit.
+
+⏺ Bash(cd /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system && git
+      status && git diff --stat)
+  ⎿  On branch feat/v5-dynamic-variants
+     Changes not staged for commit:
+       (use "git add <file>..." to update what will be committed)
+     … +21 lines (ctrl+o to expand)
+
+⏺ Bash(git add backend/src/seed.js
+      frontend/src/components/ProductCard/ProductCard.jsx
+      frontend/src/components/ProductCard/ProductCard.test.jsx
+      frontend/src/components…)
+  ⎿  ==> [pre-commit] Running backend tests...
+     PASS tests/unit/validate.test.js
+     PASS tests/unit/product.test.js
+     … +426 lines (ctrl+o to expand)
+
+⏺ Bash(git log --oneline -3)
+  ⎿  055493a feat: dynamic variant types with multiple values per type
+     453ce1a fix: replace 2 broken and 1 duplicate seed images (curl-verifi
+     ed)
+     14233fa fix: replace 4 broken-image products with new seed products
+
+⏺ Committed. Now create ADR-009, session doc, and PR.
+
+⏺ Skill(create-adr)
+  ⎿  Initializing…
+  ⎿  Error: Unknown skill: create-adr
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(ls docs/adr/ | sort | tail -3 && git log --oneline main..HEAD)
+  ⎿  ADR-006-css-design-system.md
+     ADR-007-attribute-registry-pattern.md
+     ADR-008-product-variants.md
+     … +15 lines (ctrl+o to expand)
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Write(docs/adr/ADR-009-dynamic-variant-form-ux.md)  ⎿  Wrote 39 lines to docs/adr/ADR-009-dynamic-variant-form-ux.md
+         t ADR-009: Dynamic Variant Form UX — Variant Type with Value Lis
+       2 
+       4 **Status:** Accepted
+       5 **Deciders:** akshayrr
+       7 **PR:** #8 (feat/v5-dynamic-variants)
+       8 ## Context
+      10 v4 hardcoded `size` as the only variant dimension in the admin f
+         orm. Brands need to define their own variant types (colour, mate
+         black, white, navy), each with its own stock. The question was h
+         ow to model this in the admin UI and the form state.
+     … +58 lines (ctrl+o to expand)
+
+⏺ Write(docs/sessions/session-2026-05-07-v5-dynamic-variants.md)
+  ⎿  Wrote 30 lines to
+     docs/sessions/session-2026-05-07-v5-dynamic-variants.md
+       2 # Session 2026-05-07 — v5: Dynamic Variant Types
+       3 **Branch:** feat/v5-dynamic-variants → open as PR #8
+       4 **Starting tests:** 212 (139 backend, 73 frontend)
+       5 **Ending tests:** 223 (139 backend, 84 frontend)
+       6 
+       8 Make variant dimensions fully dynamic. Brands can define any var
+         iant type (colour, size, material) and specify multiple values p
+         er type with individual stock — not hardcoded to size only.
+       9 
+      10 ## Architecture Decisions Made
+     … +46 lines (ctrl+o to expand)
+
+⏺ Bash(git add docs/adr/ADR-009-dynamic-variant-form-ux.md
+      docs/sessions/session-2026-05-07-v5-dynamic-variants.md && git commit -m
+      "$(cat <<'EOF'
+      docs: ADR-009 and se…)
+  ⎿  ==> [pre-commit] Running backend tests...
+     PASS tests/integration/products.api.test.js
+       ● Console
+     … +426 lines (ctrl+o to expand)
+
+⏺ Bash(git log --oneline -3)
+  ⎿  76efdc3 docs: ADR-009 and session doc for v5 dynamic variants
+     055493a feat: dynamic variant types with multiple values per type
+     453ce1a fix: replace 2 broken and 1 duplicate seed images (curl-verifi
+     ed)
+
+⏺ Now push and open the PR.
+
+⏺ Bash(git push -u origin feat/v5-dynamic-variants 2>&1 | tail -5)
+  ⎿  remote:      https://github.com/akshay1027/ecom-dynamic-catelog-system
+     /pull/new/feat/v5-dynamic-variants
+     remote:
+     … +5 lines (ctrl+o to expand)
+
+  Called github (ctrl+o to expand)
+
+⏺ PR #8 is open at
+  https://github.com/akshay1027/ecom-dynamic-catelog-system/pull/8
+
+  Here's what was shipped:
+
+  223/223 tests green (139 backend unchanged, 84 frontend +11 new)
+
+  What changed:
+  - Admin form: Replaced hardcoded "size" input with a hierarchical type+values
+  UI. Brand adds a variant type (e.g., "colour"), then adds values under it
+  (black/white/navy) each with stock. Works for any key.
+  - ProductCard: Shows chips grouped by variant type — separate row for size
+  chips, separate row for colour chips.
+  - ProductDetail: Shows a titled section per variant type ("SIZE", "COLOUR")
+  each with its own pill list.
+  - Seed data: 3 apparel products (Graphic Tee, Running Shorts, Floral Dress)
+  now have colour as a second variant type — so the catalog sidebar
+  automatically surfaces a colour filter alongside size.
+  - Backend: Zero changes — it was already fully generic.
+  - ADR-009: Documents the type+values choice vs per-variant key-value pairs and
+   why multi-dimensional combinations are deferred.
+
+✻ Sautéed for 22m 18s
+
+※ recap: PR #8 is open with dynamic variant types — brands can define any variant dimension with multiple values and stock. Ready for your review and merge. (disable recaps in /config)

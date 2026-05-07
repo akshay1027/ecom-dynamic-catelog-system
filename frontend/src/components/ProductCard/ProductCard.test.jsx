@@ -118,4 +118,35 @@ describe('ProductCard', () => {
     const chip = screen.getByText('M').closest('span');
     expect(chip.className).toContain('size-chip--oos');
   });
+
+  test('renders chips grouped by variant type for multi-type product', () => {
+    const product = {
+      ...baseProduct,
+      attributes: {},
+      variants: [
+        { id: 'v1', options: { size: 'S' }, stock: 10 },
+        { id: 'v2', options: { size: 'M' }, stock: 20 },
+        { id: 'v3', options: { colour: 'black' }, stock: 30 },
+        { id: 'v4', options: { colour: 'white' }, stock: 25 },
+      ],
+    };
+    render(<ProductCard product={product} onClick={vi.fn()} />);
+    expect(screen.getByText('S')).toBeTruthy();
+    expect(screen.getByText('M')).toBeTruthy();
+    expect(screen.getByText('black')).toBeTruthy();
+    expect(screen.getByText('white')).toBeTruthy();
+  });
+
+  test('renders one variant group div per distinct variant type key', () => {
+    const product = {
+      ...baseProduct,
+      attributes: {},
+      variants: [
+        { id: 'v1', options: { size: 'S' }, stock: 10 },
+        { id: 'v2', options: { colour: 'black' }, stock: 30 },
+      ],
+    };
+    const { container } = render(<ProductCard product={product} onClick={vi.fn()} />);
+    expect(container.querySelectorAll('.product-card__variant-group')).toHaveLength(2);
+  });
 });

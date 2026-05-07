@@ -1,0 +1,877 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.132
+           Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~/Documents/projects/ecom-dynamic-catelog-system
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+❯ /compact                                                                      
+  ⎿  Compacted (ctrl+o to see full summary)
+  ⎿  Plan file referenced (~/.claude/plans/i-want-to-build-memoized-crayon.md)
+
+❯ Next version, tasks:                                                          
+                                                                                
+                                                                                
+  1. Each product can have multiple sizes, colours right. So lets extend to     
+  attributes of a product to have multiple items. Design it reliably and        
+  scallablly. Lets roll out phase wise - we can start with size attribute for   
+  now. Ensure both backend and frontend catalog and admin changes are done      
+  accordingly to accomodate.                                                    
+
+⏺ I'll explore the current codebase to understand the attribute system before
+  planning the extension.
+
+⏺ 2 Explore agents finished (ctrl+o to expand)
+   ├ Explore store, seed, and backend attribute logic · 4 tool uses · 18.8k tokens
+   │ ⎿  Done
+   └ Explore frontend attribute UI components · 5 tool uses · 18.8k tokens
+     ⎿  Done
+
+⏺ Let me check the product display components before designing the plan.
+
+⏺ Explore(Explore product card and detail display components)
+  ⎿  Done (11 tool uses · 30.3k tokens · 18s)
+  (ctrl+o to expand)
+
+⏺ I have a complete picture of the codebase. Let me ask one UX question before
+  drafting the plan.
+
+⏺ User answered Claude's questions:
+  ⎿  · In the Admin ProductForm, how should the user specify that an attribute 
+     has multiple values (e.g., size = ['S', 'M', 'L'])? → Always multi-value
+
+⏺ Now I have all the context I need. Let me design the plan.
+
+⏺ Plan(Design multi-value attributes implementation plan)
+  ⎿  Done (34 tool uses · 67.8k tokens · 3m 23s)
+  (ctrl+o to expand)
+
+⏺ Let me verify the critical validation files identified in the plan before
+  writing the final plan.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Good — validation logic confirmed exactly as identified. Now I'll write the
+  final plan file.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Now I'll write the v4 plan file, replacing the stale v3 plan.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+  ⎿  Tool use rejected
+
+⏺ Good push-back. Before I can design the right storage model, I need to
+  understand the business semantics of multi-value attributes — the data model
+  is fundamentally different depending on the answer.
+
+⏺ User answered Claude's questions:
+  ⎿  · Besides size, which attributes do you expect to become multi-value in 
+     future phases? → Color, Material
+     · What is the read/write ratio for product attributes in a typical day? → 
+     Mostly reads, rare writes
+     · When a product has size: ['S', 'M', 'L', 'XL'], what does that represent?
+      → Product variants with separate stock
+
+⏺ Product variants with separate stock changes the architecture fundamentally.
+  Let me ask one more thing before finalizing.
+⏺ User answered Claude's questions:
+  ⎿  · When filtering catalog by size=M, should the product show if size M is 
+     out of stock? → Hide out-of-stock variants
+     · What should the product card show about sizes? → All available sizes as 
+     chips
+
+⏺ Now I have the full picture. Let me write the revised plan with the proper
+  variants architecture.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/i-want-to-build-memoized-crayon.md · /plan 
+     to edit
+     v4: Product Variants (Phase 1 — Size)
+
+     Context
+
+     PR #6 (v3 attribute filters) is merged into main. 171 tests (111 backend,
+     60 frontend). 29 seed products.
+
+     Problem: size: 'M' is wrong — a single shirt listing has sizes S, M, L, XL,
+      each with independent stock. The current flat-attribute model cannot
+     represent this.
+
+     User decisions confirmed:
+     - Variants model (separate stock per size)
+     - Phase 1 scope: size only. Color and material planned for Phase 2+.
+     - Filter: only show products with in-stock variants matching the selected
+     size
+     - Product card: show all variant sizes as chips (out-of-stock greyed out)
+
+     ---
+     Postgres Target Architecture
+
+     This is the data model the in-memory implementation mirrors 1:1.
+
+     Why not store size: ['S','M','L'] on the product row?
+
+     Storing an array in products.attributes.size (JSONB) means you lose the
+     per-size stock. You'd need to add a size_stocks: {"S": 20, "M": 40} map
+     alongside it — ugly and error-prone. Every stock update touches the main
+     product row and invalidates its GIN index entries. Concurrent writes
+     contend on a single row.
+
+     A product_variants table solves this:
+     - Each size is one row → stock update is a single-row UPDATE WHERE id = $1
+     — no table-level lock, no JSONB rewrite
+     - Filtering "size M, in stock" = JOIN product_variants WHERE options @> 
+     '{"size":"M"}' AND stock > 0 — GIN-indexed
+     - Future: adding color = adding rows, not schema migrations
+
+     Tables
+
+     -- Products: identity, base price, non-variant attributes
+     CREATE TABLE products (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       name TEXT NOT NULL,
+       description TEXT DEFAULT '',
+       price DECIMAL(10,2) NOT NULL,
+       currency CHAR(3) NOT NULL,
+       category TEXT NOT NULL,
+       type TEXT NOT NULL,
+       brand_id UUID REFERENCES brands(id),
+       tags TEXT[] DEFAULT '{}',
+       images TEXT[] DEFAULT '{}',
+       attributes JSONB NOT NULL DEFAULT '{}', -- color, material, fit, ram_gb, 
+     etc. (non-variant)
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     );
+     CREATE INDEX ON products USING GIN(attributes);   -- scalar attr filtering
+     CREATE INDEX ON products (category);
+     CREATE INDEX ON products (brand_id);
+
+     -- ProductVariants: one row per available variant
+     CREATE TABLE product_variants (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+       options JSONB NOT NULL DEFAULT '{}',  -- {"size": "M"} | Phase 2: 
+     {"size": "M", "color": "black"}
+       stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+       sku TEXT UNIQUE,
+       UNIQUE (product_id, options)          -- no duplicate variant per product
+     );
+     CREATE INDEX ON product_variants USING GIN(options);  -- variant option 
+     filtering
+     CREATE INDEX ON product_variants (product_id);        -- fetch all variants
+      for a product
+
+     -- AttributeRegistry: O(1) schema discovery (no product scan)
+     CREATE TABLE attribute_registry (
+       category TEXT NOT NULL,
+       attribute_key TEXT NOT NULL,
+       attribute_type TEXT NOT NULL,              -- 'string' | 'number' | 
+     'boolean'
+       is_variant_dimension BOOLEAN DEFAULT FALSE, -- true → filter via 
+     product_variants, not products.attributes
+       string_values TEXT[] DEFAULT '{}',
+       number_min DECIMAL,
+       number_max DECIMAL,
+       PRIMARY KEY (category, attribute_key)
+     );
+
+     Key read queries
+
+     -- Filter: apparel products with in-stock size M
+     SELECT DISTINCT p.*
+     FROM products p
+     JOIN product_variants pv ON pv.product_id = p.id
+       AND pv.options @> '{"size": "M"}'::jsonb
+       AND pv.stock > 0
+     WHERE p.category = 'apparel';
+
+     -- Filter: size M OR L (bitmap OR of two GIN scans)
+     SELECT DISTINCT p.*
+     FROM products p
+     JOIN product_variants pv ON pv.product_id = p.id
+       AND (pv.options @> '{"size": "M"}'::jsonb OR pv.options @> '{"size": 
+     "L"}'::jsonb)
+       AND pv.stock > 0
+     WHERE p.category = 'apparel';
+
+     -- Filter: size M AND color black (Phase 2 — single @> query)
+     SELECT DISTINCT p.*
+     FROM products p
+     JOIN product_variants pv ON pv.product_id = p.id
+       AND pv.options @> '{"size": "M", "color": "black"}'::jsonb
+       AND pv.stock > 0;
+
+     -- Scalar attribute filter (electronics, ram_gb >= 16)
+     WHERE (p.attributes->>'ram_gb')::int >= 16
+     -- Requires expression index (lazy, per category):
+     CREATE INDEX ON products (((attributes->>'ram_gb')::int)) WHERE category =
+     'electronics';
+
+     -- Fetch product + variants (detail view)
+     SELECT p.*, json_agg(json_build_object('id', pv.id, 'options', pv.options,
+     'stock', pv.stock)) AS variants
+     FROM products p
+     LEFT JOIN product_variants pv ON pv.product_id = p.id
+     WHERE p.id = $1
+     GROUP BY p.id;
+
+     Key write queries
+
+     -- Create product (atomic):
+     BEGIN;
+       INSERT INTO products (...) VALUES (...) RETURNING id;
+       INSERT INTO product_variants (product_id, options, stock) VALUES
+         ($id, '{"size": "S"}', 25), ($id, '{"size": "M"}', 40), ...;
+       INSERT INTO attribute_registry ... ON CONFLICT (category, attribute_key)
+     DO UPDATE ...;
+     COMMIT;
+
+     -- Update stock for one variant (hot path — single row, no JSONB rewrite):
+     UPDATE product_variants SET stock = $1 WHERE id = $2;
+
+     -- Add new size option:
+     INSERT INTO product_variants (product_id, options, stock) VALUES ($1,
+     '{"size": "XL"}', 0);
+
+     -- Remove a variant:
+     DELETE FROM product_variants WHERE id = $1 AND product_id = $2;
+
+     ---
+     In-memory Implementation
+
+     Maps 1:1 to the Postgres model.
+
+     Product document shape
+
+     // With variants (apparel Phase 1)
+     {
+       id: 'uuid',
+       name: 'Classic Cotton Tee',
+       price: 29.99,
+       currency: 'USD',
+       category: 'apparel',
+       type: 't-shirt',
+       brandId: 'uuid',
+       tags: ['cotton'],
+       images: [],
+       stock: 120,          // computed = sum(variant.stock) — refreshed on 
+     every variant write
+       attributes: {        // non-variant attributes only
+         color: 'white',
+         material: 'cotton',
+         fit: 'regular'
+       },
+       variants: [
+         { id: 'v1', options: { size: 'XS' }, stock: 15 },
+         { id: 'v2', options: { size: 'S' },  stock: 25 },
+         { id: 'v3', options: { size: 'M' },  stock: 40 },
+         { id: 'v4', options: { size: 'L' },  stock: 30 },
+         { id: 'v5', options: { size: 'XL' }, stock: 10 },
+       ]
+     }
+
+     // Without variants (electronics, furniture)
+     {
+       // ...
+       stock: 15,     // direct stock
+       attributes: { color: 'black', ram_gb: 16, backlit: true },
+       variants: []
+     }
+
+     product.stock is always the authoritative stock:
+     - Variant products: stock = sum(variant.stock) — recomputed on every
+     add/update/remove variant
+     - Non-variant products: stock = direct value from create/update
+
+     ---
+     Critical Files
+
+     backend/src/store/inMemoryStore.js   — core changes: registry, search,
+     variant CRUD
+     backend/src/models/product.js        — add variants to ALLOWED_FIELDS +
+     sanitize
+     backend/src/middleware/validate.js   — new validateVariant middleware
+     backend/src/routes/products.js       — 3 new variant routes
+     backend/src/seed.js                  — 11 apparel products: remove size
+     attr, add variants
+
+     backend/tests/unit/store.test.js
+     backend/tests/integration/products.api.test.js
+
+     frontend/src/api/products.js         — 3 new variant API functions
+     frontend/src/components/ProductCard/ProductCard.jsx
+     frontend/src/components/ProductDetail/ProductDetail.jsx
+     frontend/src/components/ProductForm/ProductForm.jsx
+
+     ---
+     Step-by-Step Implementation (TDD throughout)
+
+     Step 1 — Model: Add variants field
+
+     backend/src/models/product.js:
+     - Add 'variants' to ALLOWED_FIELDS
+     - sanitizeProduct: sanitized.variants = sanitized.variants || []
+     - No validation of variants in validateProduct — handled by validateVariant
+      middleware
+
+     No new tests needed — existing product.test.js tests still pass (they don't
+      set variants). One new test:
+     - sanitizeProduct: preserves variants array
+     - sanitizeProduct: defaults variants to [] when absent
+
+     ---
+     Step 2 — Store: Registry + isVariantDimension
+
+     backend/src/store/inMemoryStore.js:
+
+     Registry entry gains isVariantDimension: false:
+     catReg[key] = { type: null, values: new Set(), min: Infinity, max:
+     -Infinity, isVariantDimension: false };
+
+     updateRegistry gains an isVariantDimension boolean param:
+     function updateRegistry(category, attributes, isVariantDimension = false) {
+       // ... existing type inference logic ...
+       // At each entry: if (isVariantDimension) entry.isVariantDimension = 
+     true;
+     }
+
+     create() calls registry for both:
+     updateRegistry(product.category, product.attributes, false);
+     for (const v of product.variants) {
+       updateRegistry(product.category, v.options, true);
+     }
+
+     update() does the same when attributes or variants appear in the patch.
+
+     serializeSchema string entry gains isVariantDimension:
+     result[key] = { type: 'string', values: [...sorted], isVariantDimension:
+     entry.isVariantDimension };
+
+     Number and boolean entries also gain isVariantDimension field.
+
+     Existing test update: it('derives type: string with distinct values') —
+     update toEqual to include isVariantDimension: false.
+
+     New tests (describe('registry: variant dimension')):
+     - marks attribute as isVariantDimension: true when set via variant options
+     - scalar attribute not from variants has isVariantDimension: false
+     - schema endpoint returns isVariantDimension field
+
+     ---
+     Step 3 — Store: Variant-Aware search()
+
+     In search(), attribute filter block:
+
+     if (attrFilters && typeof attrFilters === 'object') {
+       for (const [key, val] of Object.entries(attrFilters)) {
+         const catReg = attributeRegistry.get(product.category) || {};
+         const isVariantDim = catReg[key]?.isVariantDimension || false;
+
+         if (isVariantDim) {
+           // Filter via variants — must have in-stock variant matching the 
+     filter
+           const matchingVariants = (product.variants || []).filter(v => {
+             const vVal = v.options[key];
+             if (vVal == null) return false;
+             if (Array.isArray(val)) {
+               return val.length === 0 ||
+     val.map(String).includes(String(vVal));
+             }
+             return String(vVal) === String(val);
+           }).filter(v => v.stock > 0);  // stock-aware: out-of-stock variants 
+     don't match
+
+           if (Array.isArray(val) && val.length === 0) continue; // no filter = 
+     pass
+           if (matchingVariants.length === 0) return false;
+
+         } else {
+           // Scalar attribute filter — existing logic unchanged
+           const productVal = product.attributes[key];
+           if (productVal == null) return false;
+           if (Array.isArray(val)) {
+             if (val.length === 0) continue;
+             if (!val.map(String).includes(String(productVal))) return false;
+           } else if (val !== null && typeof val === 'object') {
+             const numVal = Number(productVal);
+             if (isNaN(numVal)) return false;
+             if (val.min !== undefined && val.min !== '' && numVal <
+     Number(val.min)) return false;
+             if (val.max !== undefined && val.max !== '' && numVal >
+     Number(val.max)) return false;
+           } else {
+             if (String(productVal) !== String(val)) return false;
+           }
+         }
+       }
+     }
+
+     Critical invariant: when catReg[key] doesn't exist or isVariantDimension is
+      false, the scalar path is unchanged — all 111 existing tests pass.
+
+     New tests (describe('search: variant dimension filtering')):
+     - returns product when matching variant has stock > 0
+     - excludes product when matching variant has stock = 0
+     - returns product matching any variant in OR filter
+     - excludes product when no variant matches OR filter
+     - treats empty array filter as no-op for variant dimension
+     - products without variants pass through variant filter check silently
+     (non-variant products: variant filter = N/A)
+
+     ---
+     Step 4 — Store: Variant CRUD + Stock Recomputation
+
+     New functions in inMemoryStore.js:
+
+     function addVariant(productId, variantData) {
+       const product = findById(productId);
+       if (!product) return null;
+       const variant = { id: nanoid(), options: variantData.options || {},
+     stock: variantData.stock || 0 };
+       const updated = { ...product, variants: [...(product.variants || []),
+     variant] };
+       updated.stock = updated.variants.reduce((s, v) => s + v.stock, 0);
+       store.set(productId, updated);
+       updateRegistry(updated.category, variant.options, true);
+       return { ...updated };
+     }
+
+     function updateVariant(productId, variantId, patch) {
+       const product = findById(productId);
+       if (!product) return null;
+       const variants = (product.variants || []).map(v =>
+         v.id === variantId ? { ...v, ...patch, id: v.id } : v
+       );
+       const updated = { ...product, variants, stock: variants.reduce((s, v) =>
+     s + v.stock, 0) };
+       store.set(productId, updated);
+       return { ...updated };
+     }
+
+     function removeVariant(productId, variantId) {
+       const product = findById(productId);
+       if (!product) return null;
+       const variants = (product.variants || []).filter(v => v.id !==
+     variantId);
+       const updated = { ...product, variants, stock: variants.reduce((s, v) =>
+     s + v.stock, 0) };
+       store.set(productId, updated);
+       return { ...updated };
+     }
+
+     Export: add addVariant, updateVariant, removeVariant to module.exports.
+
+     New tests (describe('variant CRUD')):
+     - addVariant: appends variant and recomputes stock
+     - addVariant: returns null for non-existent product
+     - updateVariant: updates stock and recomputes product stock
+     - removeVariant: removes variant and recomputes product stock
+     - removeVariant: returns null for non-existent product
+
+     ---
+     Step 5 — Routes: Variant CRUD Endpoints
+
+     backend/src/routes/products.js — add before router.get('/:id', ...):
+
+     router.post('/:id/variants', validateVariant, (req, res) => {
+       const product = store.addVariant(req.params.id, req.body);
+       if (!product) return next(makeError('product not found', 'NOT_FOUND',
+     404));
+       return sendSuccess(res, product, 201);
+     });
+
+     router.put('/:id/variants/:vid', validateVariant, (req, res) => {
+       const product = store.updateVariant(req.params.id, req.params.vid,
+     req.body);
+       if (!product) return next(makeError('product or variant not found',
+     'NOT_FOUND', 404));
+       return sendSuccess(res, product);
+     });
+
+     router.delete('/:id/variants/:vid', (req, res) => {
+       const product = store.removeVariant(req.params.id, req.params.vid);
+       if (!product) return next(makeError('product or variant not found',
+     'NOT_FOUND', 404));
+       return sendSuccess(res, product);
+     });
+
+     validateVariant in validate.js:
+     function validateVariant(req, res, next) {
+       const { options, stock } = req.body;
+       if (!options || typeof options !== 'object') return
+     next(makeError('options object is required'));
+       if (stock !== undefined && (typeof stock !== 'number' || stock < 0)) {
+         return next(makeError('stock must be a non-negative number'));
+       }
+       next();
+     }
+
+     New integration tests (describe('variant CRUD endpoints')):
+     - POST /:id/variants: adds variant and returns updated product
+     - POST /:id/variants: 404 for non-existent product
+     - POST /:id/variants: 400 when options missing
+     - PUT /:id/variants/:vid: updates variant stock
+     - DELETE /:id/variants/:vid: removes variant
+     - product.stock reflects sum of variant stocks after changes
+
+     ---
+     Step 6 — Seed Data: Apparel Products Get Size Variants
+
+     backend/src/seed.js — 11 apparel products: remove size from attributes, add
+      variants array.
+
+     Example transformation:
+     // Before:
+     { name: 'Classic White Oxford Shirt', ..., stock: 20, attributes: { size:
+     'M', color: 'white', material: 'cotton', fit: 'regular' } }
+
+     // After:
+     {
+       name: 'Classic White Oxford Shirt', ..., stock: 0, // recomputed from 
+     variants
+       attributes: { color: 'white', material: 'cotton', fit: 'regular' }, // 
+     size removed
+       variants: [
+         { options: { size: 'XS' }, stock: 10 },
+         { options: { size: 'S' }, stock: 20 },
+         { options: { size: 'M' }, stock: 35 },
+         { options: { size: 'L' }, stock: 30 },
+         { options: { size: 'XL' }, stock: 15 },
+         { options: { size: 'XXL' }, stock: 5 },
+       ]
+     }
+
+     All 11 apparel products get realistic variant arrays with stock values.
+     Jeans/chinos get waist×inseam combinations. Electronics and furniture: no
+     change (no variants, stock stays direct).
+
+     seed() create() calls store.create() with full variants array — registry
+     auto-updates and marks size as isVariantDimension: true for apparel
+     category.
+
+     ---
+     Step 7 — Frontend: API Layer
+
+     frontend/src/api/products.js — add variant functions to productsApi:
+     addVariant: (productId, variantData) =>
+       fetchJson(`${BASE}/${productId}/variants`, { method: 'POST', body:
+     JSON.stringify(variantData) }),
+     updateVariant: (productId, variantId, patch) =>
+       fetchJson(`${BASE}/${productId}/variants/${variantId}`, { method: 'PUT',
+     body: JSON.stringify(patch) }),
+     removeVariant: (productId, variantId) =>
+       fetchJson(`${BASE}/${productId}/variants/${variantId}`, { method:
+     'DELETE' }),
+
+     ---
+     Step 8 — Frontend: ProductCard — Size Chips
+
+     frontend/src/components/ProductCard/ProductCard.jsx:
+
+     After existing attribute badges, add size chips section:
+     {product.variants && product.variants.length > 0 && (
+       <div className="product-card__variants">
+         {product.variants.map(v => (
+           <span
+             key={v.id}
+             className={`size-chip${v.stock === 0 ? ' size-chip--oos' : ''}`}
+             title={v.stock === 0 ? 'Out of stock' : `${v.stock} in stock`}
+           >
+             {v.options.size}
+           </span>
+         ))}
+       </div>
+     )}
+
+     CSS: .size-chip = small pill with var(--color-primary-light) bg,
+     var(--color-primary-dark) text. .size-chip--oos = opacity 0.4,
+     text-decoration: line-through.
+
+     New tests in ProductCard.test.jsx:
+     - renders size chips when product has variants
+     - does not render variant section when variants array is empty
+     - applies --oos class to out-of-stock variant chips
+
+     ---
+     Step 9 — Frontend: ProductDetail — Available Sizes Section
+
+     frontend/src/components/ProductDetail/ProductDetail.jsx:
+
+     Add a "Available Sizes" section above or within the Specifications section:
+     {product.variants && product.variants.length > 0 && (
+       <div>
+         <div className="product-detail__section-title">Available Sizes</div>
+         <div className="product-detail__variants">
+           {product.variants.map(v => (
+             <span
+               key={v.id}
+               className={`variant-pill${v.stock === 0 ? ' variant-pill--oos' : 
+     ''}`}
+             >
+               {v.options.size}
+               {v.stock === 0 && <span className="variant-pill__oos-label"> (Out
+      of stock)</span>}
+               {v.stock > 0 && <span className="variant-pill__stock">{v.stock}
+     left</span>}
+             </span>
+           ))}
+         </div>
+       </div>
+     )}
+
+     New tests in ProductDetail.test.jsx:
+     - renders Available Sizes section when variants present
+     - renders each variant option label
+     - shows out-of-stock label for zero-stock variants
+     - does not render variants section when variants is empty
+
+     ---
+     Step 10 — Frontend: ProductForm — Variants Section (Admin)
+
+     frontend/src/components/ProductForm/ProductForm.jsx:
+
+     State shape: add variants to fields:
+     function buildInitialState(product) {
+       return {
+         // ... existing fields ...
+         variants: product?.variants
+           ? product.variants.map(v => ({ id: v.id, size: v.options?.size || '',
+      stock: String(v.stock) }))
+           : [],
+       };
+     }
+
+     New handlers:
+     function addVariantRow() {
+       setFields(prev => ({ ...prev, variants: [...prev.variants, { id: null,
+     size: '', stock: '0' }] }));
+     }
+     function updateVariantRow(index, key, value) {
+       setFields(prev => {
+         const next = [...prev.variants];
+         next[index] = { ...next[index], [key]: value };
+         return { ...prev, variants: next };
+       });
+     }
+     function removeVariantRow(index) {
+       setFields(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i
+     !== index) }));
+     }
+
+     Variants section JSX (below attributes, before actions):
+     <div className="form-section-title">Variants (Sizes)</div>
+     {fields.variants.map((v, i) => (
+       <div key={i} className="variant-row">
+         <input
+           type="text"
+           placeholder="Size (e.g. M)"
+           value={v.size}
+           onChange={e => updateVariantRow(i, 'size', e.target.value)}
+         />
+         <input
+           type="number"
+           min="0"
+           placeholder="Stock"
+           value={v.stock}
+           onChange={e => updateVariantRow(i, 'stock', e.target.value)}
+         />
+         <button type="button" onClick={() =>
+     removeVariantRow(i)}>&times;</button>
+       </div>
+     ))}
+     <button type="button" className="btn-add-attr" onClick={addVariantRow}>+
+     Add Size</button>
+
+     handleSubmit — build variants for onSave:
+     const variants = fields.variants
+       .filter(v => v.size.trim() !== '')
+       .map(v => ({ options: { size: v.size.trim() }, stock: parseInt(v.stock,
+     10) || 0 }));
+     // Pass to onSave — AdminPage decides whether to PATCH the product or do 
+     variant-level API calls
+     onSave({ ...formData, variants });
+
+     Admin page onSave behavior: when saving a product with variants, the
+     AdminPage calls productsApi.update(id, { ...fields }) which replaces the
+     variants array on the product (store.update handles variants patch).
+
+     New tests in ProductForm.test.jsx:
+     - renders existing variants in Variants section
+     - Add Size button appends empty variant row
+     - updating size input updates the variant row
+     - removing a variant row clears it
+     - handleSubmit includes variants in onSave payload
+     - handleSubmit skips variant rows with empty size
+
+     ---
+     Execution Order (TDD — RED before GREEN per file)
+
+     1. models/product.js — add variants field, 2 tests
+     2. store.test.js registry — isVariantDimension tests → fix registry
+     3. store.test.js search — variant filter tests → fix search()
+     4. store.test.js CRUD — variant CRUD tests → add variant functions
+     5. validate.js — validateVariant tests → add function
+     6. products.api.test.js — variant endpoint tests → add routes
+     7. seed.js — update apparel products (visual verification only)
+     8. ProductCard.test.jsx → fix ProductCard.jsx
+     9. ProductDetail.test.jsx → fix ProductDetail.jsx
+     10. ProductForm.test.jsx → fix ProductForm.jsx
+     11. api/products.js — add variant API functions (no separate test file
+     needed; covered by integration tests)
+
+     ---
+     Test Count Targets
+
+     ┌────────────────────────────────────┬─────────┬─────┬───────────┐
+     │                File                │ Current │ New │ New Total │
+     ├────────────────────────────────────┼─────────┼─────┼───────────┤
+     │ product.test.js                    │ 10      │ +2  │ 12        │
+     ├────────────────────────────────────┼─────────┼─────┼───────────┤
+     │ store.test.js                      │ 54      │ +14 │ 68        │
+     ├────────────────────────────────────┼─────────┼─────┼───────────┤
+     │ products.api.test.js               │ 47      │ +8  │ 55        │
+     ├────────────────────────────────────┼─────────┼─────┼───────────┤
+     │ validate.test.js (new or existing) │ ?       │ +3  │ +3        │
+     ├────────────────────────────────────┼─────────┼─────┼───────────┤
+     │ ProductCard.test.jsx               │ 9       │ +3  │ 12        │
+     ├────────────────────────────────────┼─────────┼─────┼───────────┤
+     │ ProductDetail.test.jsx             │ 8       │ +4  │ 12        │
+     ├────────────────────────────────────┼─────────┼─────┼───────────┤
+     │ ProductForm.test.jsx               │ 4       │ +6  │ 10        │
+     └────────────────────────────────────┴─────────┴─────┴───────────┘
+
+     Targets: ~138 backend · ~73 frontend = ~211 total (from 171)
+
+     ---
+     Verification
+
+     cd backend && npm test   # ~138 green
+     cd frontend && npm test  # ~73 green
+
+     Visual (both servers running):
+     - Catalog → filter Apparel → size checkboxes show: XS, S, M, L, XL, XXL +
+     waist-inseam sizes (from variants)
+     - Select "M" → only apparel products with in-stock M variants shown
+     - Select "M" + "L" → union
+     - A product where M has stock=0 does NOT appear when M filter is checked
+     - Product card shows size chips: [S] [M] [L] [XL] (out-of-stock greyed out)
+     - Open product detail → "Available Sizes" section with stock-per-variant
+     - Admin → Edit product → Variants section shows current sizes + stock
+     - Admin → Add Size → type "XXL" + stock 5 → save → new variant appears on
+     card
+
+     ---
+     PR
+
+     feat/v4-product-variants → main
+
+⏺ Now executing. First setting up the branch, then spawning parallel-capable
+  subagents.
+
+⏺ Bash(git pull origin main && git checkout -b feat/v4-product-variants)
+  ⎿  From https://github.com/akshay1027/ecom-dynamic-catelog-system
+      * branch            main       -> FETCH_HEAD
+        2949b06..6430c61  main       -> origin/main
+     … +3 lines (ctrl+o to expand)
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Agent(Backend implementation for v4 product variants)
+  ⎿  Done (48 tool uses · 72.2k tokens · 5m 10s)
+  (ctrl+o to expand)
+
+⏺ Backend done — 139 tests green. Now executing the frontend changes.
+
+⏺ Agent(Frontend implementation for v4 product variants)
+  ⎿  Done (39 tool uses · 44.8k tokens · 3m 17s)
+  (ctrl+o to expand)
+
+⏺ Both agents done — 139 backend + 73 frontend = 212 tests. Let me verify and
+  then create the PR.
+
+⏺ Bash(cd backend && npm test --silent 2>&1 | tail -5)
+  ⎿  Test Suites: 6 passed, 6 total
+     Tests:       139 passed, 139 total
+     Snapshots:   0 total
+     … +2 lines (ctrl+o to expand)
+
+⏺ Bash(cd frontend && npm test --run 2>&1 | tail -5)
+  ⎿  Error: Exit code 1
+     (eval):cd:1: no such file or directory: frontend
+
+⏺ Bash(cd
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system/frontend &&
+       npm test --run 2>&1 | tail -5)
+  ⎿   Test Files  10 passed (10)
+           Tests  73 passed (73)
+        Start at  15:58:36
+     … +2 lines (ctrl+o to expand)
+
+⏺ All green. Committing and creating the PR.
+
+⏺ Bash(cd /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system && git
+      status)
+  ⎿  On branch feat/v4-product-variants
+     Changes not staged for commit:
+       (use "git add <file>..." to update what will be committed)
+     … +21 lines (ctrl+o to expand)
+
+⏺ Bash(git add backend/src/ backend/tests/ frontend/src/ && git commit -m "$(cat
+       <<'EOF'
+      feat: product variants with per-size stock (Phase 1)…)
+  ⎿  ==> [pre-commit] Running backend tests...
+     PASS tests/integration/products.api.test.js
+       ● Console
+     … +426 lines (ctrl+o to expand)
+
+⏺ Bash(git log --oneline -3)
+  ⎿  bd59854 feat: product variants with per-size stock (Phase 1)
+     6430c61 Merge pull request #6 from akshay1027/feat/v3-attribute-filter
+     s
+     030775f feat: scalable attribute filter with registry pattern
+
+⏺ Commit created. Creating the PR.
+
+⏺ Bash(git push -u origin feat/v4-product-variants)
+  ⎿  remote:
+     remote: Create a pull request for 'feat/v4-product-variants' on GitHub
+      by visiting:
+     … +8 lines (ctrl+o to expand)
+
+⏺ Bash(gh pr create --title "feat: product variants with per-size stock (Phase
+      1)" --body "$(cat <<'EOF'
+      ## Summary…)
+  ⎿  Error: Exit code 127
+     (eval):1: command not found: gh
+
+⏺ Bash(which gh || brew install gh 2>/dev/null | tail -3)  ⎿  Interrupted · What should Claude do instead?
+
+❯ use mcp                                                                       
+
+  Called github (ctrl+o to expand)
+
+⏺ PR #7 is open:
+  https://github.com/akshay1027/ecom-dynamic-catelog-system/pull/7
+
+  What shipped:
+  - 139 backend + 73 frontend = 212 tests green (from 171)
+  - product_variants model with JSONB options — GIN-indexed in Postgres, mirrors
+   to in-memory store
+  - Stock-aware size filtering: out-of-stock variants are invisible to the
+  catalog filter
+  - isVariantDimension registry flag cleanly separates scalar attribute
+  filtering from variant filtering — no changes needed to existing
+  electronics/furniture filter paths
+  - Size chips on product cards, "Available Sizes" section in product detail,
+  full variant CRUD in admin form
+  - Phase 2 (color) requires only new seed data + isVariantDimension: true in
+  registry — zero store or route changes
+
+✻ Cogitated for 26s
+
+※ recap: Built product variants with per-size stock for apparel — PR #7 open for review. Merge it to continue to Phase 2 (color variants). (disable recaps in /config)

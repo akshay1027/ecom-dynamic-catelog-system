@@ -1,10 +1,29 @@
+import { useState } from 'react';
 import './ProductDetail.css';
+
+function groupVariantsByKey(variants) {
+  return variants.reduce((acc, v) => {
+    for (const key of Object.keys(v.options)) {
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(v);
+    }
+    return acc;
+  }, {});
+}
 
 export default function ProductDetail({ product, onClose }) {
   const {
     name, brandName, description, price, currency, category, type,
     images, stock, tags, attributes, variants,
   } = product;
+
+  const [selectedId, setSelectedId] = useState(
+    () => variants?.find(v => v.stock > 0)?.id ?? variants?.[0]?.id ?? null
+  );
+
+  const selectedVariant = variants?.find(v => v.id === selectedId);
+  const displayStock = selectedVariant !== undefined ? selectedVariant.stock : stock;
+  const isInStock = displayStock > 0;
 
   return (
     <div className="product-detail-overlay" onClick={onClose}>
@@ -24,8 +43,8 @@ export default function ProductDetail({ product, onClose }) {
           <div className="product-detail__meta">{category} · {type}</div>
           <div className="product-detail__price">{currency} {price.toFixed(2)}</div>
 
-          <div className={stock > 0 ? 'product-detail__stock--in' : 'product-detail__stock--out'}>
-            {stock > 0 ? `In stock (${stock})` : 'Out of stock'}
+          <div className={isInStock ? 'product-detail__stock--in' : 'product-detail__stock--out'}>
+            {isInStock ? `In stock (${displayStock})` : 'Out of stock'}
           </div>
 
           {description && (
@@ -35,23 +54,27 @@ export default function ProductDetail({ product, onClose }) {
             </div>
           )}
 
-          {variants && variants.length > 0 && (
-            <div>
-              <div className="product-detail__section-title">Available Sizes</div>
+          {variants && variants.length > 0 && Object.entries(groupVariantsByKey(variants)).map(([key, group]) => (
+            <div key={key}>
+              <div className="product-detail__section-title">
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </div>
               <div className="product-detail__variants">
-                {variants.map(v => (
-                  <span
+                {group.map(v => (
+                  <button
                     key={v.id}
-                    className={`variant-pill${v.stock === 0 ? ' variant-pill--oos' : ''}`}
+                    type="button"
+                    className={`variant-pill${v.stock === 0 ? ' variant-pill--oos' : ''}${v.id === selectedId ? ' variant-pill--selected' : ''}`}
+                    onClick={() => setSelectedId(v.id)}
                   >
-                    {v.options.size}
+                    {v.options[key]}
                     {v.stock === 0 && <span className="variant-pill__oos-label"> (Out of stock)</span>}
                     {v.stock > 0 && <span className="variant-pill__stock">{v.stock} left</span>}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
-          )}
+          ))}
 
           {attributes && Object.keys(attributes).length > 0 && (
             <div>
