@@ -3,7 +3,7 @@ import './SearchFilter.css';
 
 const CATEGORIES = ['', 'apparel', 'furniture', 'electronics'];
 
-export default function SearchFilter({ onFiltersChange, brands }) {
+export default function SearchFilter({ onFiltersChange, brands, onClose }) {
   const [filters, setFilters] = useState({});
 
   function update(patch) {
@@ -23,6 +23,18 @@ export default function SearchFilter({ onFiltersChange, brands }) {
 
   return (
     <div className="search-filter">
+      {onClose && (
+        <div className="search-filter__header">
+          <span className="search-filter__title">Filters</span>
+          <button
+            className="search-filter__close"
+            onClick={onClose}
+            aria-label="Close panel"
+          >
+            &times;
+          </button>
+        </div>
+      )}
       <div className="search-filter__group">
         <input
           className="search-filter__input"

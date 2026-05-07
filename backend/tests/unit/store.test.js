@@ -210,3 +210,32 @@ describe('store.search()', () => {
     expect(result.total).toBe(0);
   });
 });
+
+describe('store.search() by brandId', () => {
+  beforeEach(() => {
+    store.create({ name: 'Alpha Shoe', price: 80, currency: 'USD', category: 'apparel', type: 'shoe', stock: 5, brandId: 'brand-alpha', brandName: 'Alpha' });
+    store.create({ name: 'Alpha Bag', price: 60, currency: 'USD', category: 'apparel', type: 'bag', stock: 3, brandId: 'brand-alpha', brandName: 'Alpha' });
+    store.create({ name: 'Beta Desk', price: 300, currency: 'USD', category: 'furniture', type: 'desk', stock: 1, brandId: 'brand-beta', brandName: 'Beta' });
+  });
+
+  test('returns products matching brandId using byBrand index', () => {
+    const result = store.search({ brandId: 'brand-alpha' });
+    expect(result.items).toHaveLength(2);
+    result.items.forEach(p => expect(p.brandId).toBe('brand-alpha'));
+  });
+
+  test('returns empty array when brandId has no products', () => {
+    const result = store.search({ brandId: 'brand-nonexistent' });
+    expect(result.items).toHaveLength(0);
+    expect(result.total).toBe(0);
+  });
+
+  test('combines brandId filter with category filter', () => {
+    const result = store.search({ brandId: 'brand-alpha', category: 'apparel' });
+    expect(result.items).toHaveLength(2);
+    result.items.forEach(p => {
+      expect(p.brandId).toBe('brand-alpha');
+      expect(p.category).toBe('apparel');
+    });
+  });
+});

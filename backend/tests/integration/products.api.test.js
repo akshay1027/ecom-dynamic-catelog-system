@@ -180,6 +180,48 @@ describe('DELETE /api/v1/products/:id', () => {
   });
 });
 
+// ─── GET /api/v1/products?brandId=X ──────────────────────────────────────────
+
+describe('GET /api/v1/products?brandId=X', () => {
+  let brand1Id;
+  let brand2Id;
+
+  beforeEach(async () => {
+    const b1 = await request(app).post('/api/v1/brands').send({ name: 'Brand Alpha' });
+    brand1Id = b1.body.data.id;
+    const b2 = await request(app).post('/api/v1/brands').send({ name: 'Brand Beta' });
+    brand2Id = b2.body.data.id;
+
+    await createProduct({ name: 'Alpha Shoe', category: 'apparel', type: 'shoe', price: 80, stock: 5, brandId: brand1Id });
+    await createProduct({ name: 'Alpha Bag', category: 'apparel', type: 'bag', price: 60, stock: 3, brandId: brand1Id });
+    await createProduct({ name: 'Beta Desk', category: 'furniture', type: 'desk', price: 300, stock: 1, brandId: brand2Id });
+  });
+
+  it('returns only products for the given brandId', async () => {
+    const res = await request(app).get(`/api/v1/products?brandId=${brand1Id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.items).toHaveLength(2);
+    res.body.data.items.forEach(p => expect(p.brandId).toBe(brand1Id));
+  });
+
+  it('returns empty list if no products match brandId', async () => {
+    const b3 = await request(app).post('/api/v1/brands').send({ name: 'Brand Gamma' });
+    const brand3Id = b3.body.data.id;
+    const res = await request(app).get(`/api/v1/products?brandId=${brand3Id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.items).toHaveLength(0);
+    expect(res.body.data.total).toBe(0);
+  });
+
+  it('ignores empty brandId and returns all products', async () => {
+    const res = await request(app).get('/api/v1/products?brandId=');
+    expect(res.status).toBe(200);
+    // empty string brandId should be ignored — returns all 3 products
+    expect(res.body.data.total).toBeGreaterThan(0);
+  });
+});
+
 // ─── GET /api/v1/products (search/list) ──────────────────────────────────────
 
 describe('GET /api/v1/products', () => {
