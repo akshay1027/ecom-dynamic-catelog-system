@@ -329,9 +329,11 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
               </button>
             </div>
           ))}
-          <button type="button" className="btn-add-attr" onClick={addVariantType}>
-            + Add Variant Type
-          </button>
+          {fields.variantTypes.length === 0 && (
+            <button type="button" className="btn-add-attr" onClick={addVariantType}>
+              + Add Variant Type
+            </button>
+          )}
 
           <div className="form-actions">
             <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>

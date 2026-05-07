@@ -167,14 +167,7 @@ describe('ProductForm variants section', () => {
     fireEvent.click(screen.getAllByText('+ Add Value')[0]);
     const valueInputs = screen.getAllByPlaceholderText('Value (e.g. blue)');
     fireEvent.change(valueInputs[0], { target: { value: 'M' } });
-    // add colour type
-    fireEvent.click(screen.getByText('+ Add Variant Type'));
-    const typeInputs2 = screen.getAllByPlaceholderText('Variant type (e.g. colour, size)');
-    fireEvent.change(typeInputs2[1], { target: { value: 'colour' } });
-    fireEvent.click(screen.getAllByText('+ Add Value')[1]);
-    const valueInputs2 = screen.getAllByPlaceholderText('Value (e.g. blue)');
-    fireEvent.change(valueInputs2[1], { target: { value: 'blue' } });
-    // fill required fields and submit
+    // fill required fields and submit (single type only)
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'New Product' } });
     fireEvent.change(screen.getByLabelText(/price/i), { target: { value: '10' } });
     fireEvent.change(screen.getByLabelText(/category/i), { target: { value: 'apparel' } });
@@ -184,9 +177,30 @@ describe('ProductForm variants section', () => {
       expect.objectContaining({
         variants: expect.arrayContaining([
           expect.objectContaining({ options: { size: 'M' } }),
-          expect.objectContaining({ options: { colour: 'blue' } }),
         ]),
       })
     );
+  });
+});
+
+describe('ProductForm — single variant type constraint', () => {
+  const brandsList = [{ id: 'b1', name: 'TestBrand' }];
+
+  it('shows "+ Add Variant Type" button when no type exists', () => {
+    render(<ProductForm product={null} brands={brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByText('+ Add Variant Type')).toBeTruthy();
+  });
+
+  it('hides "+ Add Variant Type" button after one type is added', () => {
+    render(<ProductForm product={null} brands={brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('+ Add Variant Type'));
+    expect(screen.queryByText('+ Add Variant Type')).toBeNull();
+  });
+
+  it('shows "+ Add Variant Type" button again after removing the only type', () => {
+    render(<ProductForm product={null} brands={brandsList} onSave={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText('+ Add Variant Type'));
+    fireEvent.click(screen.getByRole('button', { name: /remove variant type 0/i }));
+    expect(screen.getByText('+ Add Variant Type')).toBeTruthy();
   });
 });

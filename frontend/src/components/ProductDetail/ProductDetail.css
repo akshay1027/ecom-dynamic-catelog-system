@@ -185,6 +185,18 @@
   font-size: 13px;
   font-weight: 500;
 }
+.variant-pill {
+  border: none;
+  cursor: pointer;
+}
+.variant-pill--selected {
+  background: var(--color-primary);
+  color: #fff;
+}
+.variant-pill--selected .variant-pill__stock {
+  color: rgba(255, 255, 255, 0.75);
+  opacity: 1;
+}
 .variant-pill--oos {
   opacity: 0.45;
 }
