@@ -39,6 +39,17 @@ describe('ProductForm', () => {
     expect(screen.getByLabelText(/name/i).value).toBe('Existing');
     expect(screen.getByLabelText(/price/i).value).toBe('50');
   });
+
+  it('renders saveError inside the dialog when provided', () => {
+    render(<ProductForm brands={mockBrands} onSave={vi.fn()} onClose={vi.fn()} saveError="brandId is required" />);
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.textContent).toContain('brandId is required');
+  });
+
+  it('renders nothing for saveError when prop is falsy', () => {
+    render(<ProductForm brands={mockBrands} onSave={vi.fn()} onClose={vi.fn()} saveError={null} />);
+    expect(screen.queryByText(/brandId is required/i)).toBeNull();
+  });
 });
 
 describe('ProductForm variants section', () => {
