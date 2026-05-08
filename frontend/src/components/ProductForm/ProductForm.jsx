@@ -30,7 +30,7 @@ function buildInitialState(product) {
   };
 }
 
-export default function ProductForm({ product, brands = [], onSave, onClose }) {
+export default function ProductForm({ product, brands = [], onSave, onClose, saveError }) {
   const [fields, setFields] = useState(() => buildInitialState(product));
 
   function setField(key, value) {
@@ -211,6 +211,7 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
                 type="text"
                 value={fields.type}
                 onChange={e => setField('type', e.target.value)}
+                required
               />
             </div>
           </div>
@@ -233,6 +234,7 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
                 id="pf-brand"
                 value={fields.brandId}
                 onChange={e => setField('brandId', e.target.value)}
+                required
               >
                 <option value="">Select brand</option>
                 {brands.map(b => (
@@ -334,6 +336,8 @@ export default function ProductForm({ product, brands = [], onSave, onClose }) {
               + Add Variant Type
             </button>
           )}
+
+          {saveError && <p className="form-save-error">{saveError}</p>}
 
           <div className="form-actions">
             <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>

@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [error, setError] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   // Load brands on mount
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function AdminPage() {
   function closeForm() {
     setFormOpen(false);
     setEditingProduct(null);
+    setFormError(null);
   }
 
   async function handleSave(formData) {
@@ -72,7 +74,7 @@ export default function AdminPage() {
       closeForm();
       loadProducts();
     } catch (err) {
-      setError(err.message);
+      setFormError(err.message);
     }
   }
 
@@ -155,6 +157,7 @@ export default function AdminPage() {
           brands={brands}
           onSave={handleSave}
           onClose={closeForm}
+          saveError={formError}
         />
       )}
     </div>

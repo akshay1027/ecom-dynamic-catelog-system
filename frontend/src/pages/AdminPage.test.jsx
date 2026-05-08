@@ -52,4 +52,17 @@ describe('AdminPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /add product/i }));
     expect(screen.getByRole('dialog')).toBeTruthy();
   });
+
+  it('shows save error inside the dialog when create fails', async () => {
+    productsApi.create.mockRejectedValue(new Error('type is required'));
+    render(<AdminPage />);
+    await waitFor(() => screen.getByRole('button', { name: /add product/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add product/i }));
+    const dialog = screen.getByRole('dialog');
+    const form = dialog.querySelector('form');
+    fireEvent.submit(form);
+    await waitFor(() => {
+      expect(dialog.textContent).toContain('type is required');
+    });
+  });
 });
