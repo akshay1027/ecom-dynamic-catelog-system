@@ -163,7 +163,7 @@ npm run test:frontend  # Vitest only
 | attributes | object | flat key-value, no nesting | values may be string, number, or boolean |
 | variants | Variant[] | nested array | — |
 | brandId | UUID | must reference a valid Brand, required | indexed |
-| brandName | string | denormalized from Brand | set server-side only |
+| brandName | string | denormalized from Brand | Read heavy data |
 | createdAt | ISO 8601 | immutable | — |
 | updatedAt | ISO 8601 | — | — |
 
@@ -293,38 +293,3 @@ When the user picks a category in `SearchFilter`:
 </details>
 
 ---
-
-<details>
-<summary><strong>Engineering Challenges</strong></summary>
-
-### 1. Dynamic attribute schema per category
-Products span categories (apparel, furniture, electronics) with completely different attribute sets. Hardcoding columns per attribute or building a typed sub-schema per category (with discriminator columns) creates rigid schemas that don't serialize cleanly. An EAV table would be premature for a prototype. The solution was a flat `attributes: {}` JSON object with no nesting — any string, number, or boolean value is valid. This defers schema enforcement to the registry layer and maps directly to Postgres JSONB when the store is swapped. *(ADR-001)*
-
-### 2. O(n) → O(1) attribute schema reads
-The frontend needs `GET /api/v1/products/attributes/schema` to render the right filter controls. The naive approach scans all products on every request — unacceptable at scale. Four approaches were evaluated (full scan, EAV table, registry map, Elasticsearch aggregations). The chosen approach maintains an `attributeRegistry` map updated on every product write (O(k) per write, where k = number of attributes). Schema reads are then O(1) lookups. A related gotcha: in Express, `GET /api/v1/products/attributes/schema` must be registered *before* `GET /api/v1/products/:id` — otherwise the literal string `attributes` matches as a UUID parameter. *(ADR-007)*
-
-### 3. Per-variant stock without write amplification
-A shirt sold in sizes S/M/L/XL needs independent stock per size. Storing sizes as a scalar attribute loses per-size inventory. Storing a map (`size_stocks: { S: 20, M: 0 }`) inside the product document requires rewriting the entire JSONB column on every stock update — expensive with GIN indexes. The solution was a nested `variants` array where each variant carries its own `options` object and `stock` count. Stock updates touch only one variant entry. The hard part: `product.stock` becomes a computed aggregate that must be kept in sync as `sum(variant.stock)` on every variant write. *(ADR-008)*
-
-### 4. Variant form UX — hierarchical type + values
-The admin form must let users define custom variant types (e.g., "colour") and multiple values per type (black, white, navy) each with independent stock. Ad-hoc per-variant rows are confusing and don't enforce consistent key names. A full combination matrix (size × colour) is implementation overkill for v1. The chosen UX was hierarchical: name a variant type, add values beneath it, each with a stock field. This matches Shopify/WooCommerce conventions and maps cleanly to the backend's flat `{ options: { colour: 'black' }, stock: 80 }` shape on submit. The hard part: reconstructing the hierarchy from the backend's flat array when loading an existing product into the edit form. *(ADR-009)*
-
-### 5. Denormalized brandName on products
-A pure FK approach requires a JOIN (or secondary lookup) on every product list response. Denormalizing `brandName` onto the product eliminates the JOIN but means the field can go stale if a brand is renamed. The chosen approach was denormalization with a hard rule: `brandName` is set server-side only — the client cannot write it directly. The tradeoff accepted: a brand rename requires an update propagation step (acceptable at prototype scale; would need a trigger or event in production Postgres). *(ADR-005)*
-
-### 6. CSS design system without a framework
-Early UI had 13 hardcoded hex values scattered across 8+ component files. Global rebranding required search-and-replace across the entire codebase. CSS-in-JS (styled-components, emotion) adds a runtime bundle dependency. Tailwind would have required replacing all existing class names mid-project. The solution was CSS custom properties on `:root` in `index.css` — rebrand by editing one file, zero new tooling, natively inspectable in DevTools. The tradeoff: no compile-time type checking for variable name typos. *(ADR-006)*
-
-### 7. Mobile-responsive layout without a UI framework
-The catalog sidebar and admin layout must work on mobile. The solution was a collapsible drawer at the 768 px breakpoint: sidebar hidden by default with `transform: translateX(-100%)`, a toggle button visible on mobile, and an overlay that dismisses the drawer on click. The drawer state lives in `App.jsx` — acceptable for a single-sidebar layout, but would need React Context or a state machine for a multi-drawer design. *(ADR-006)*
-
-### 8. Store swappability contract
-The in-memory store must be replaceable with Postgres without touching business logic. The contract is enforced by convention: `inMemoryStore.js` exports exactly the functions `{ create, findById, update, remove, search, clear, getAttributeSchema, addVariant, updateVariant, removeVariant }`. Nothing outside `backend/src/store/` touches the underlying Map. Swapping to Postgres means implementing the same interface in `postgresStore.js` and changing one `require()`. The limitation: this is a code-review discipline constraint, not a language or tooling constraint — it requires consistent vigilance.
-
-### 9. Frontend state management
-The catalog page manages one data domain (products + filters). React Context adds indirection without benefit at this scale. Zustand/Redux would be over-engineered for a single domain. React Query or SWR would be ideal but add a dependency and learning curve for a prototype. The chosen approach was a custom `useProducts(filters)` hook with local `useState`. The interface is designed to be drop-in replaceable with React Query later — the hook signature and return shape stay the same. *(ADR-004)*
-
-### 10. Admin form with two parallel dynamic hierarchies
-The product form manages two independent dynamic structures simultaneously: `attributes` (a flat array of `{ key, value }` rows) and `variantTypes` (a nested structure of `{ key, values: [{ id, value, stock }] }`). These have different shapes, different validation rules, and different serialization targets. The implementation required six dedicated handlers (add/edit/remove for attribute rows, add/edit/remove for variant type values) plus a `buildVariantTypes()` helper to reconstruct the form hierarchy from the backend's flat variants array on edit form load.
-
-</details>
