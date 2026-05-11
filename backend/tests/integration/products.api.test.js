@@ -4,14 +4,23 @@ const request = require('supertest');
 const app = require('../../src/app');
 const store = require('../../src/store');
 const brandStore = require('../../src/store/brandIndex');
+const userStore = require('../../src/store/userIndex');
 
+let adminCookie;
 let defaultBrandId;
 
 beforeEach(async () => {
+  await userStore.clear();
   await brandStore.clear();
   await store.clear();
+
+  // Admin user for protected write routes
+  await userStore.create({ email: 'admin@test.com', password: 'Password1!', role: 'admin' });
+  const loginRes = await request(app).post('/api/v1/auth/login').send({ email: 'admin@test.com', password: 'Password1!' });
+  adminCookie = loginRes.headers['set-cookie'];
+
   // Create a default brand for all tests
-  const brandRes = await request(app).post('/api/v1/brands').send({ name: 'Default Test Brand' });
+  const brandRes = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'Default Test Brand' });
   defaultBrandId = brandRes.body.data.id;
 });
 
@@ -30,10 +39,10 @@ async function createProduct(overrides = {}) {
     attributes: { size: 'M', color: 'blue' },
     brandId: defaultBrandId,
   };
-  const res = await request(app)
+  return request(app)
     .post('/api/v1/products')
+    .set('Cookie', adminCookie)
     .send({ ...defaults, ...overrides });
-  return res;
 }
 
 // ─── POST /api/v1/products ────────────────────────────────────────────────────
@@ -114,12 +123,13 @@ describe('PUT /api/v1/products/:id', () => {
 
     const res = await request(app)
       .put(`/api/v1/products/${id}`)
+      .set('Cookie', adminCookie)
       .send({ price: 120, stock: 8 });
 
     expect(res.status).toBe(200);
     expect(res.body.data.price).toBe(120);
     expect(res.body.data.stock).toBe(8);
-    expect(res.body.data.name).toBe('Test Shirt'); // unchanged
+    expect(res.body.data.name).toBe('Test Shirt');
     expect(res.body.data.createdAt).toBe(originalCreatedAt);
     expect(res.body.data.updatedAt).not.toBe(originalCreatedAt);
   });
@@ -130,16 +140,17 @@ describe('PUT /api/v1/products/:id', () => {
 
     const res = await request(app)
       .put(`/api/v1/products/${id}`)
+      .set('Cookie', adminCookie)
       .send({ attributes: { color: 'green', material: 'silk' } });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.attributes.size).toBeUndefined(); // deleted
-    expect(res.body.data.attributes.color).toBe('green');  // updated
-    expect(res.body.data.attributes.material).toBe('silk'); // new
+    expect(res.body.data.attributes.size).toBeUndefined();
+    expect(res.body.data.attributes.color).toBe('green');
+    expect(res.body.data.attributes.material).toBe('silk');
   });
 
   test('returns 404 for an unknown id', async () => {
-    const res = await request(app).put('/api/v1/products/nonexistent-id').send({ price: 50 });
+    const res = await request(app).put('/api/v1/products/nonexistent-id').set('Cookie', adminCookie).send({ price: 50 });
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('NOT_FOUND');
   });
@@ -147,7 +158,7 @@ describe('PUT /api/v1/products/:id', () => {
   test('returns 400 if price is negative in update', async () => {
     const created = await createProduct();
     const id = created.body.data.id;
-    const res = await request(app).put(`/api/v1/products/${id}`).send({ price: -10 });
+    const res = await request(app).put(`/api/v1/products/${id}`).set('Cookie', adminCookie).send({ price: -10 });
     expect(res.status).toBe(400);
   });
 });
@@ -159,7 +170,7 @@ describe('DELETE /api/v1/products/:id', () => {
     const created = await createProduct();
     const id = created.body.data.id;
 
-    const res = await request(app).delete(`/api/v1/products/${id}`);
+    const res = await request(app).delete(`/api/v1/products/${id}`).set('Cookie', adminCookie);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
@@ -167,14 +178,14 @@ describe('DELETE /api/v1/products/:id', () => {
   test('deleted product is not retrievable via GET', async () => {
     const created = await createProduct();
     const id = created.body.data.id;
-    await request(app).delete(`/api/v1/products/${id}`);
+    await request(app).delete(`/api/v1/products/${id}`).set('Cookie', adminCookie);
 
     const res = await request(app).get(`/api/v1/products/${id}`);
     expect(res.status).toBe(404);
   });
 
   test('returns 404 for unknown id', async () => {
-    const res = await request(app).delete('/api/v1/products/nonexistent-id');
+    const res = await request(app).delete('/api/v1/products/nonexistent-id').set('Cookie', adminCookie);
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('NOT_FOUND');
   });
@@ -187,9 +198,9 @@ describe('GET /api/v1/products?brandId=X', () => {
   let brand2Id;
 
   beforeEach(async () => {
-    const b1 = await request(app).post('/api/v1/brands').send({ name: 'Brand Alpha' });
+    const b1 = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'Brand Alpha' });
     brand1Id = b1.body.data.id;
-    const b2 = await request(app).post('/api/v1/brands').send({ name: 'Brand Beta' });
+    const b2 = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'Brand Beta' });
     brand2Id = b2.body.data.id;
 
     await createProduct({ name: 'Alpha Shoe', category: 'apparel', type: 'shoe', price: 80, stock: 5, brandId: brand1Id });
@@ -206,7 +217,7 @@ describe('GET /api/v1/products?brandId=X', () => {
   });
 
   it('returns empty list if no products match brandId', async () => {
-    const b3 = await request(app).post('/api/v1/brands').send({ name: 'Brand Gamma' });
+    const b3 = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'Brand Gamma' });
     const brand3Id = b3.body.data.id;
     const res = await request(app).get(`/api/v1/products?brandId=${brand3Id}`);
     expect(res.status).toBe(200);
@@ -217,7 +228,6 @@ describe('GET /api/v1/products?brandId=X', () => {
   it('ignores empty brandId and returns all products', async () => {
     const res = await request(app).get('/api/v1/products?brandId=');
     expect(res.status).toBe(200);
-    // empty string brandId should be ignored — returns all 3 products
     expect(res.body.data.total).toBeGreaterThan(0);
   });
 });
@@ -258,7 +268,7 @@ describe('GET /api/v1/products', () => {
   test('filters by minPrice and maxPrice', async () => {
     const res = await request(app).get('/api/v1/products?minPrice=60&maxPrice=400');
     expect(res.status).toBe(200);
-    expect(res.body.data.items).toHaveLength(2); // Jeans(60) + Desk(400)
+    expect(res.body.data.items).toHaveLength(2);
     res.body.data.items.forEach(p => {
       expect(p.price).toBeGreaterThanOrEqual(60);
       expect(p.price).toBeLessThanOrEqual(400);
@@ -317,19 +327,18 @@ describe('GET /api/v1/products', () => {
 
 describe('GET /api/v1/products/attributes/schema', () => {
   beforeEach(async () => {
-    // Create a brand first
-    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand', description: 'Test' });
+    const brandRes = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'TestBrand', description: 'Test' });
     const brandId = brandRes.body.data.id;
 
-    await request(app).post('/api/v1/products').send({
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({
       name: 'Laptop A', price: 999, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId,
       attributes: { color: 'silver', ram_gb: 16, noise_cancelling: false }
     });
-    await request(app).post('/api/v1/products').send({
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({
       name: 'Laptop B', price: 1199, currency: 'USD', category: 'electronics', type: 'laptop', stock: 3, brandId,
       attributes: { color: 'black', ram_gb: 32, noise_cancelling: false }
     });
-    await request(app).post('/api/v1/products').send({
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({
       name: 'T-shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 50, brandId,
       attributes: { color: 'red', size: 'M' }
     });
@@ -367,11 +376,11 @@ describe('GET /api/v1/products/attributes/schema', () => {
 
 describe('attribute filter: multi-value OR via API', () => {
   it('returns products matching any selected attribute value', async () => {
-    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand2', description: 'T' });
+    const brandRes = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'TestBrand2', description: 'T' });
     const brandId = brandRes.body.data.id;
-    await request(app).post('/api/v1/products').send({ name: 'Red Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'red' } });
-    await request(app).post('/api/v1/products').send({ name: 'Blue Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'blue' } });
-    await request(app).post('/api/v1/products').send({ name: 'Green Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'green' } });
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({ name: 'Red Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'red' } });
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({ name: 'Blue Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'blue' } });
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({ name: 'Green Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 10, brandId, attributes: { color: 'green' } });
 
     const res = await request(app).get('/api/v1/products?attributes[color][]=red&attributes[color][]=blue');
     expect(res.status).toBe(200);
@@ -382,9 +391,9 @@ describe('attribute filter: multi-value OR via API', () => {
 describe('variant CRUD endpoints', () => {
   let brandId, productId;
   beforeEach(async () => {
-    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand', description: 'Test' });
+    const brandRes = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'TestBrand', description: 'Test' });
     brandId = brandRes.body.data.id;
-    const prodRes = await request(app).post('/api/v1/products').send({
+    const prodRes = await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({
       name: 'Test Shirt', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0, brandId,
       attributes: { color: 'white' },
       variants: [{ options: { size: 'M' }, stock: 20 }]
@@ -395,6 +404,7 @@ describe('variant CRUD endpoints', () => {
   it('POST /:id/variants adds a new variant and returns updated product', async () => {
     const res = await request(app)
       .post(`/api/v1/products/${productId}/variants`)
+      .set('Cookie', adminCookie)
       .send({ options: { size: 'L' }, stock: 15 });
     expect(res.status).toBe(201);
     expect(res.body.data.variants).toHaveLength(2);
@@ -404,6 +414,7 @@ describe('variant CRUD endpoints', () => {
   it('POST /:id/variants returns 404 for non-existent product', async () => {
     const res = await request(app)
       .post(`/api/v1/products/non-existent-id/variants`)
+      .set('Cookie', adminCookie)
       .send({ options: { size: 'L' }, stock: 5 });
     expect(res.status).toBe(404);
   });
@@ -411,6 +422,7 @@ describe('variant CRUD endpoints', () => {
   it('POST /:id/variants returns 400 when options missing', async () => {
     const res = await request(app)
       .post(`/api/v1/products/${productId}/variants`)
+      .set('Cookie', adminCookie)
       .send({ stock: 5 });
     expect(res.status).toBe(400);
   });
@@ -420,6 +432,7 @@ describe('variant CRUD endpoints', () => {
     const variantId = product.variants[0].id;
     const res = await request(app)
       .put(`/api/v1/products/${productId}/variants/${variantId}`)
+      .set('Cookie', adminCookie)
       .send({ options: { size: 'M' }, stock: 50 });
     expect(res.status).toBe(200);
     expect(res.body.data.variants[0].stock).toBe(50);
@@ -430,7 +443,8 @@ describe('variant CRUD endpoints', () => {
     const product = (await request(app).get(`/api/v1/products/${productId}`)).body.data;
     const variantId = product.variants[0].id;
     const res = await request(app)
-      .delete(`/api/v1/products/${productId}/variants/${variantId}`);
+      .delete(`/api/v1/products/${productId}/variants/${variantId}`)
+      .set('Cookie', adminCookie);
     expect(res.status).toBe(200);
     expect(res.body.data.variants).toHaveLength(0);
   });
@@ -438,25 +452,24 @@ describe('variant CRUD endpoints', () => {
   it('product.stock reflects sum of variant stocks after changes', async () => {
     await request(app)
       .post(`/api/v1/products/${productId}/variants`)
+      .set('Cookie', adminCookie)
       .send({ options: { size: 'L' }, stock: 30 });
     const res = await request(app).get(`/api/v1/products/${productId}`);
-    expect(res.body.data.stock).toBe(50); // 20 + 30
+    expect(res.body.data.stock).toBe(50);
   });
 });
 
 describe('attribute filter: variant dimension via API', () => {
   let brandId;
   beforeEach(async () => {
-    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TBrand', description: 'T' });
+    const brandRes = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'TBrand', description: 'T' });
     brandId = brandRes.body.data.id;
-    // Tee: M in-stock, L out-of-stock
-    await request(app).post('/api/v1/products').send({
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({
       name: 'Tee', price: 29, currency: 'USD', category: 'apparel', type: 'shirt', stock: 0, brandId,
       attributes: { color: 'white' },
       variants: [{ options: { size: 'M' }, stock: 20 }, { options: { size: 'L' }, stock: 0 }]
     });
-    // Hoodie: L in-stock
-    await request(app).post('/api/v1/products').send({
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({
       name: 'Hoodie', price: 59, currency: 'USD', category: 'apparel', type: 'hoodie', stock: 0, brandId,
       attributes: { color: 'grey' },
       variants: [{ options: { size: 'L' }, stock: 15 }]
@@ -478,10 +491,10 @@ describe('attribute filter: variant dimension via API', () => {
 
 describe('attribute filter: numeric range via API', () => {
   it('returns products within ram_gb range', async () => {
-    const brandRes = await request(app).post('/api/v1/brands').send({ name: 'TestBrand3', description: 'T' });
+    const brandRes = await request(app).post('/api/v1/brands').set('Cookie', adminCookie).send({ name: 'TestBrand3', description: 'T' });
     const brandId = brandRes.body.data.id;
-    await request(app).post('/api/v1/products').send({ name: 'Low RAM', price: 500, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId, attributes: { ram_gb: 8 } });
-    await request(app).post('/api/v1/products').send({ name: 'High RAM', price: 1500, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId, attributes: { ram_gb: 32 } });
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({ name: 'Low RAM', price: 500, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId, attributes: { ram_gb: 8 } });
+    await request(app).post('/api/v1/products').set('Cookie', adminCookie).send({ name: 'High RAM', price: 1500, currency: 'USD', category: 'electronics', type: 'laptop', stock: 5, brandId, attributes: { ram_gb: 32 } });
 
     const res = await request(app).get('/api/v1/products?attributes[ram_gb][min]=16');
     expect(res.status).toBe(200);

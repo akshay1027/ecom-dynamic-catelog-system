@@ -5,6 +5,8 @@ const store = require('../store');
 const brandStore = require('../store/brandIndex');
 const { sanitizeProduct } = require('../models/product');
 const { validateCreate, validateUpdate, validateListQuery, validateVariant } = require('../middleware/validate');
+const authenticate = require('../middleware/authenticate');
+const authorize = require('../middleware/authorize');
 
 function sendSuccess(res, data, status = 200) {
   return res.status(status).json({ success: true, data, error: null });
@@ -22,7 +24,7 @@ function makeError(message, code = 'NOT_FOUND', status = 404) {
 }
 
 // POST /api/v1/products
-router.post('/', validateCreate, async (req, res, next) => {
+router.post('/', authenticate, authorize('admin'), validateCreate, async (req, res, next) => {
   try {
     const sanitized = sanitizeProduct(req.body);
     const brand = await brandStore.findById(sanitized.brandId);
@@ -77,7 +79,7 @@ router.get('/', validateListQuery, async (req, res, next) => {
 });
 
 // POST /api/v1/products/:id/variants
-router.post('/:id/variants', validateVariant, async (req, res, next) => {
+router.post('/:id/variants', authenticate, authorize('admin'), validateVariant, async (req, res, next) => {
   try {
     const product = await store.addVariant(req.params.id, req.body);
     if (!product) return next(makeError('product not found', 'NOT_FOUND', 404));
@@ -88,7 +90,7 @@ router.post('/:id/variants', validateVariant, async (req, res, next) => {
 });
 
 // PUT /api/v1/products/:id/variants/:vid
-router.put('/:id/variants/:vid', validateVariant, async (req, res, next) => {
+router.put('/:id/variants/:vid', authenticate, authorize('admin'), validateVariant, async (req, res, next) => {
   try {
     const product = await store.updateVariant(req.params.id, req.params.vid, req.body);
     if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
@@ -99,7 +101,7 @@ router.put('/:id/variants/:vid', validateVariant, async (req, res, next) => {
 });
 
 // DELETE /api/v1/products/:id/variants/:vid
-router.delete('/:id/variants/:vid', async (req, res, next) => {
+router.delete('/:id/variants/:vid', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     const product = await store.removeVariant(req.params.id, req.params.vid);
     if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
@@ -123,7 +125,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // PUT /api/v1/products/:id
-router.put('/:id', validateUpdate, async (req, res, next) => {
+router.put('/:id', authenticate, authorize('admin'), validateUpdate, async (req, res, next) => {
   try {
     if (req.body.brandId) {
       const brand = await brandStore.findById(req.body.brandId);
@@ -143,7 +145,7 @@ router.put('/:id', validateUpdate, async (req, res, next) => {
 });
 
 // DELETE /api/v1/products/:id
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     const deleted = await store.remove(req.params.id);
     if (!deleted) {

@@ -3,6 +3,7 @@ const BRANDS_BASE = '/api/v1/brands';
 
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
@@ -65,4 +66,7 @@ export const productsApi = {
 
 export const brandsApi = {
   list: (signal) => fetchJson(BRANDS_BASE, { signal }),
+  create: (data) => fetchJson(BRANDS_BASE, { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, patch) => fetchJson(`${BRANDS_BASE}/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
+  remove: (id) => fetchJson(`${BRANDS_BASE}/${id}`, { method: 'DELETE' }),
 };
