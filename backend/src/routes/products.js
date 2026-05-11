@@ -1,8 +1,8 @@
 'use strict';
 
 const router = require('express').Router();
-const store = require('../store/inMemoryStore');
-const brandStore = require('../store/brandStore');
+const store = require('../store');
+const brandStore = require('../store/brandIndex');
 const { sanitizeProduct } = require('../models/product');
 const { validateCreate, validateUpdate, validateListQuery, validateVariant } = require('../middleware/validate');
 
@@ -22,15 +22,15 @@ function makeError(message, code = 'NOT_FOUND', status = 404) {
 }
 
 // POST /api/v1/products
-router.post('/', validateCreate, (req, res, next) => {
+router.post('/', validateCreate, async (req, res, next) => {
   try {
     const sanitized = sanitizeProduct(req.body);
-    const brand = brandStore.findById(sanitized.brandId);
+    const brand = await brandStore.findById(sanitized.brandId);
     if (!brand) {
       return sendError(res, 'INVALID_REFERENCE', 'brandId does not reference a valid brand', 400);
     }
     sanitized.brandName = brand.name;
-    const product = store.create(sanitized);
+    const product = await store.create(sanitized);
     return sendSuccess(res, product, 201);
   } catch (err) {
     err.status = 400;
@@ -40,73 +40,97 @@ router.post('/', validateCreate, (req, res, next) => {
 });
 
 // GET /api/v1/products/attributes/schema — must be before /:id to avoid route conflict
-router.get('/attributes/schema', (req, res) => {
-  const { category } = req.query;
-  const schema = store.getAttributeSchema(category || null);
-  return sendSuccess(res, schema);
+router.get('/attributes/schema', async (req, res, next) => {
+  try {
+    const { category } = req.query;
+    const schema = await store.getAttributeSchema(category || null);
+    return sendSuccess(res, schema);
+  } catch (err) {
+    return next(err);
+  }
 });
 
 // GET /api/v1/products — must be before /:id to avoid route conflict
-router.get('/', validateListQuery, (req, res) => {
-  const { name, category, type, minPrice, maxPrice, tags, page, limit, brandId } = req.query;
-  // req.query.attributes arrives as an object when bracket notation is used: ?attributes[color]=red
-  const attributes = req.query.attributes;
+router.get('/', validateListQuery, async (req, res, next) => {
+  try {
+    const { name, category, type, minPrice, maxPrice, tags, page, limit, brandId } = req.query;
+    // req.query.attributes arrives as a nested object when bracket notation is used: ?attributes[color]=red
+    const attributes = req.query.attributes;
 
-  const filters = {};
-  if (name) filters.name = name;
-  if (category) filters.category = category;
-  if (type) filters.type = type;
-  if (minPrice !== undefined) filters.minPrice = Number(minPrice);
-  if (maxPrice !== undefined) filters.maxPrice = Number(maxPrice);
-  if (attributes && typeof attributes === 'object') filters.attributes = attributes;
-  if (tags) filters.tags = tags; // comma-separated string; store.search handles splitting
-  if (page) filters.page = Number(page);
-  if (limit) filters.limit = Number(limit);
-  if (brandId) filters.brandId = brandId;
+    const filters = {};
+    if (name) filters.name = name;
+    if (category) filters.category = category;
+    if (type) filters.type = type;
+    if (minPrice !== undefined) filters.minPrice = Number(minPrice);
+    if (maxPrice !== undefined) filters.maxPrice = Number(maxPrice);
+    if (attributes && typeof attributes === 'object') filters.attributes = attributes;
+    if (tags) filters.tags = tags;
+    if (page) filters.page = Number(page);
+    if (limit) filters.limit = Number(limit);
+    if (brandId) filters.brandId = brandId;
 
-  const result = store.search(filters);
-  return sendSuccess(res, result);
+    const result = await store.search(filters);
+    return sendSuccess(res, result);
+  } catch (err) {
+    return next(err);
+  }
 });
 
 // POST /api/v1/products/:id/variants
-router.post('/:id/variants', validateVariant, (req, res, next) => {
-  const product = store.addVariant(req.params.id, req.body);
-  if (!product) return next(makeError('product not found', 'NOT_FOUND', 404));
-  return sendSuccess(res, product, 201);
+router.post('/:id/variants', validateVariant, async (req, res, next) => {
+  try {
+    const product = await store.addVariant(req.params.id, req.body);
+    if (!product) return next(makeError('product not found', 'NOT_FOUND', 404));
+    return sendSuccess(res, product, 201);
+  } catch (err) {
+    return next(err);
+  }
 });
 
 // PUT /api/v1/products/:id/variants/:vid
-router.put('/:id/variants/:vid', validateVariant, (req, res, next) => {
-  const product = store.updateVariant(req.params.id, req.params.vid, req.body);
-  if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
-  return sendSuccess(res, product);
+router.put('/:id/variants/:vid', validateVariant, async (req, res, next) => {
+  try {
+    const product = await store.updateVariant(req.params.id, req.params.vid, req.body);
+    if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
+    return sendSuccess(res, product);
+  } catch (err) {
+    return next(err);
+  }
 });
 
 // DELETE /api/v1/products/:id/variants/:vid
-router.delete('/:id/variants/:vid', (req, res, next) => {
-  const product = store.removeVariant(req.params.id, req.params.vid);
-  if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
-  return sendSuccess(res, product);
+router.delete('/:id/variants/:vid', async (req, res, next) => {
+  try {
+    const product = await store.removeVariant(req.params.id, req.params.vid);
+    if (!product) return next(makeError('product or variant not found', 'NOT_FOUND', 404));
+    return sendSuccess(res, product);
+  } catch (err) {
+    return next(err);
+  }
 });
 
 // GET /api/v1/products/:id
-router.get('/:id', (req, res) => {
-  const product = store.findById(req.params.id);
-  if (!product) {
-    return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
+router.get('/:id', async (req, res, next) => {
+  try {
+    const product = await store.findById(req.params.id);
+    if (!product) {
+      return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
+    }
+    return sendSuccess(res, product);
+  } catch (err) {
+    return next(err);
   }
-  return sendSuccess(res, product);
 });
 
 // PUT /api/v1/products/:id
-router.put('/:id', validateUpdate, (req, res, next) => {
+router.put('/:id', validateUpdate, async (req, res, next) => {
   try {
     if (req.body.brandId) {
-      const brand = brandStore.findById(req.body.brandId);
+      const brand = await brandStore.findById(req.body.brandId);
       if (!brand) return sendError(res, 'INVALID_REFERENCE', 'brandId does not reference a valid brand', 400);
       req.body.brandName = brand.name;
     }
-    const updated = store.update(req.params.id, req.body);
+    const updated = await store.update(req.params.id, req.body);
     if (!updated) {
       return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
     }
@@ -119,12 +143,16 @@ router.put('/:id', validateUpdate, (req, res, next) => {
 });
 
 // DELETE /api/v1/products/:id
-router.delete('/:id', (req, res) => {
-  const deleted = store.remove(req.params.id);
-  if (!deleted) {
-    return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const deleted = await store.remove(req.params.id);
+    if (!deleted) {
+      return sendError(res, 'NOT_FOUND', `Product ${req.params.id} not found`, 404);
+    }
+    return sendSuccess(res, { id: req.params.id, deleted: true });
+  } catch (err) {
+    return next(err);
   }
-  return sendSuccess(res, { id: req.params.id, deleted: true });
 });
 
 module.exports = router;

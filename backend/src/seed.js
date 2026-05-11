@@ -1,7 +1,7 @@
 'use strict';
 
-const store = require('./store/inMemoryStore');
-const brandStore = require('./store/brandStore');
+const store = require('./store');
+const brandStore = require('./store/brandIndex');
 
 const SEED_BRANDS = [
   { name: 'Everyday Basics', description: 'Timeless everyday apparel' },
@@ -370,14 +370,16 @@ function buildSeedProducts(bm) {
   ];
 }
 
-function seed() {
-  const existingBrands = brandStore.list();
+async function seed() {
+  const existingBrands = await brandStore.list();
   if (existingBrands.length > 0) return; // already seeded — idempotent
 
-  const seededBrands = SEED_BRANDS.map(b => brandStore.create(b));
+  const seededBrands = await Promise.all(SEED_BRANDS.map(b => brandStore.create(b)));
   const brandMap = Object.fromEntries(seededBrands.map(b => [b.name, b]));
 
-  buildSeedProducts(brandMap).forEach(p => store.create(p));
+  for (const p of buildSeedProducts(brandMap)) {
+    await store.create(p);
+  }
 
   console.log(JSON.stringify({
     timestamp: new Date().toISOString(),

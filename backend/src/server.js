@@ -12,5 +12,10 @@ app.listen(PORT, () => {
     port: PORT,
     env: process.env.NODE_ENV || 'development',
   }));
-  seed();
+  seed().catch(err => console.error(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    operation: 'seed',
+    error: err.message,
+    stack: err.stack,
+  })));
 });
