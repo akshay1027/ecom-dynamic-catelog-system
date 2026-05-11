@@ -5,3 +5,5 @@ coverage/
 *.log
 .DS_Store
 docker-compose.override.yml
+.claude/worktrees/
+*.txt
