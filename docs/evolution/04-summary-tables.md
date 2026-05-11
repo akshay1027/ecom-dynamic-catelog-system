@@ -37,7 +37,7 @@ _Generated 2026-05-12. Snapshot of the full system as of v9 (main)._
 | **CI** | `pr-verify.yml` | PR open/update | Calls `verify-pr.js` (Claude API review); blocks on P0/P1 | Automated project-rule linting |
 | **CI** | `pr-format.yml` | PR open/update | Prettier + ESLint auto-fix; commits back to branch | Enforce consistent formatting without manual work |
 | **Memory** | Stop Hook Silence Rule | Stop hook with no BLOCKED text | Zero output — silence is the only correct response | Any response re-triggers the hook → infinite loop |
-| **Memory** | TDD Non-Negotiable | Before implementation edit | Write failing test first (RED), implement (GREEN), then /write-tests | Learned from v4/v5: plans with wrong data model foundation bypassed TDD and caught issues late |
+| **Memory** | TDD Non-Negotiable | Before implementation edit | Write failing test first (RED), implement (GREEN), then /write-tests | Learned from v4/v5 |
 | **Memory** | Plan Rejection Protocol | When plan is rejected | Trace exact JS object shape to backend contract; rejection means wrong assumption, not incomplete plan | Two incidents where plan looked complete but had wrong data model foundation |
 | **Memory** | Context Compaction Strategy | At ~80% context usage | Run /export then /compact before hitting the limit | Hitting limit mid-task drops context abruptly with no recovery window |
 | **Memory** | GitHub MCP Preference | Any GitHub operation | Use `mcp__github__*` tools, not `gh` CLI; call ToolSearch first to load schema | Structured output, typed errors, better observability |
