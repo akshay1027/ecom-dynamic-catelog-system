@@ -1,20 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
 import { productsApi, brandsApi } from '../api/products';
 import ProductForm from '../components/ProductForm/ProductForm';
+import BrandForm from '../components/BrandForm/BrandForm';
 import './AdminPage.css';
 
 export default function AdminPage() {
+  const [tab, setTab] = useState('products'); // 'products' | 'brands'
+
+  // ── Products state ───────────────────────────────────────────────────────────
   const [brands, setBrands] = useState([]);
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
-  const [selectedBrandId, setSelectedBrandId] = useState(null); // null = All Brands
-  const [formOpen, setFormOpen] = useState(false);
+  const [selectedBrandId, setSelectedBrandId] = useState(null);
+  const [productFormOpen, setProductFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [error, setError] = useState(null);
-  const [formError, setFormError] = useState(null);
+  const [productFormError, setProductFormError] = useState(null);
 
-  // Load brands on mount
-  useEffect(() => {
+  // ── Brands state ─────────────────────────────────────────────────────────────
+  const [brandFormOpen, setBrandFormOpen] = useState(false);
+  const [editingBrand, setEditingBrand] = useState(null);
+  const [brandFormError, setBrandFormError] = useState(null);
+
+  const [error, setError] = useState(null);
+
+  // ── Load brands ───────────────────────────────────────────────────────────────
+  const loadBrands = useCallback(() => {
     let cancelled = false;
     brandsApi.list()
       .then(data => {
@@ -26,7 +36,11 @@ export default function AdminPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Load products whenever selectedBrandId changes; cancellation prevents stale updates
+  useEffect(() => {
+    return loadBrands();
+  }, [loadBrands]);
+
+  // ── Load products ─────────────────────────────────────────────────────────────
   const loadProducts = useCallback(() => {
     let cancelled = false;
     const filters = {};
@@ -48,41 +62,83 @@ export default function AdminPage() {
     return loadProducts();
   }, [loadProducts]);
 
-  function openAdd() {
+  // ── Product handlers ──────────────────────────────────────────────────────────
+  function openAddProduct() {
     setEditingProduct(null);
-    setFormOpen(true);
+    setProductFormOpen(true);
   }
 
-  function openEdit(product) {
+  function openEditProduct(product) {
     setEditingProduct(product);
-    setFormOpen(true);
+    setProductFormOpen(true);
   }
 
-  function closeForm() {
-    setFormOpen(false);
+  function closeProductForm() {
+    setProductFormOpen(false);
     setEditingProduct(null);
-    setFormError(null);
+    setProductFormError(null);
   }
 
-  async function handleSave(formData) {
+  async function handleSaveProduct(formData) {
     try {
-      if (editingProduct && editingProduct.id) {
+      if (editingProduct?.id) {
         await productsApi.update(editingProduct.id, formData);
       } else {
         await productsApi.create(formData);
       }
-      closeForm();
+      closeProductForm();
       loadProducts();
     } catch (err) {
-      setFormError(err.message);
+      setProductFormError(err.message);
     }
   }
 
-  async function handleDelete(product) {
+  async function handleDeleteProduct(product) {
     if (!window.confirm(`Delete "${product.name}"?`)) return;
     try {
       await productsApi.remove(product.id);
       loadProducts();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  // ── Brand handlers ────────────────────────────────────────────────────────────
+  function openAddBrand() {
+    setEditingBrand(null);
+    setBrandFormOpen(true);
+  }
+
+  function openEditBrand(brand) {
+    setEditingBrand(brand);
+    setBrandFormOpen(true);
+  }
+
+  function closeBrandForm() {
+    setBrandFormOpen(false);
+    setEditingBrand(null);
+    setBrandFormError(null);
+  }
+
+  async function handleSaveBrand(formData) {
+    try {
+      if (editingBrand?.id) {
+        await brandsApi.update(editingBrand.id, formData);
+      } else {
+        await brandsApi.create(formData);
+      }
+      closeBrandForm();
+      loadBrands();
+    } catch (err) {
+      setBrandFormError(err.message);
+    }
+  }
+
+  async function handleDeleteBrand(brand) {
+    if (!window.confirm(`Delete brand "${brand.name}"?`)) return;
+    try {
+      await brandsApi.remove(brand.id);
+      loadBrands();
     } catch (err) {
       setError(err.message);
     }
@@ -112,52 +168,118 @@ export default function AdminPage() {
       <main className="admin-main">
         {error && <div className="admin-error">{error}</div>}
 
-        <div className="admin-header">
-          <h1>Products</h1>
-          <span className="count">{total} products</span>
-          <button className="btn-add" onClick={openAdd}>+ Add Product</button>
+        <div className="admin-tabs">
+          <button
+            className={`tab-btn${tab === 'products' ? ' active' : ''}`}
+            onClick={() => setTab('products')}
+          >
+            Products
+          </button>
+          <button
+            className={`tab-btn${tab === 'brands' ? ' active' : ''}`}
+            onClick={() => setTab('brands')}
+          >
+            Brands
+          </button>
         </div>
 
-        {products.length === 0 ? (
-          <div className="admin-empty">No products found.</div>
-        ) : (
-          <table className="product-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Brand</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map(product => (
-                <tr key={product.id}>
-                  <td>{product.name}</td>
-                  <td>{product.brandName || '—'}</td>
-                  <td>{product.category}</td>
-                  <td>{product.currency} {Number(product.price).toFixed(2)}</td>
-                  <td>{product.stock}</td>
-                  <td>
-                    <button className="btn-edit" onClick={() => openEdit(product)}>Edit</button>
-                    <button className="btn-delete" onClick={() => handleDelete(product)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {tab === 'products' && (
+          <>
+            <div className="admin-header">
+              <h1>Products</h1>
+              <span className="count">{total} products</span>
+              <button className="btn-add" onClick={openAddProduct}>+ Add Product</button>
+            </div>
+
+            {products.length === 0 ? (
+              <div className="admin-empty">No products found.</div>
+            ) : (
+              <table className="product-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Brand</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(product => (
+                    <tr key={product.id}>
+                      <td>{product.name}</td>
+                      <td>{product.brandName || '—'}</td>
+                      <td>{product.category}</td>
+                      <td>{product.currency} {Number(product.price).toFixed(2)}</td>
+                      <td>{product.stock}</td>
+                      <td>
+                        <button className="btn-edit" onClick={() => openEditProduct(product)}>Edit</button>
+                        <button className="btn-delete" onClick={() => handleDeleteProduct(product)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+
+        {tab === 'brands' && (
+          <>
+            <div className="admin-header">
+              <h1>Brands</h1>
+              <span className="count">{brands.length} brands</span>
+              <button className="btn-add" onClick={openAddBrand}>+ Add Brand</button>
+            </div>
+
+            {brands.length === 0 ? (
+              <div className="admin-empty">No brands found.</div>
+            ) : (
+              <table className="product-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Website</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {brands.map(brand => (
+                    <tr key={brand.id}>
+                      <td>{brand.name}</td>
+                      <td>{brand.description || '—'}</td>
+                      <td>{brand.website || '—'}</td>
+                      <td>
+                        <button className="btn-edit" onClick={() => openEditBrand(brand)}>Edit</button>
+                        <button className="btn-delete" onClick={() => handleDeleteBrand(brand)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
         )}
       </main>
 
-      {formOpen && (
+      {productFormOpen && (
         <ProductForm
           product={editingProduct}
           brands={brands}
-          onSave={handleSave}
-          onClose={closeForm}
-          saveError={formError}
+          onSave={handleSaveProduct}
+          onClose={closeProductForm}
+          saveError={productFormError}
+        />
+      )}
+
+      {brandFormOpen && (
+        <BrandForm
+          brand={editingBrand}
+          onSave={handleSaveBrand}
+          onClose={closeBrandForm}
+          saveError={brandFormError}
         />
       )}
     </div>

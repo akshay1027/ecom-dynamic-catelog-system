@@ -65,4 +65,7 @@ export const productsApi = {
 
 export const brandsApi = {
   list: () => fetchJson(BRANDS_BASE),
+  create: (data) => fetchJson(BRANDS_BASE, { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, patch) => fetchJson(`${BRANDS_BASE}/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
+  remove: (id) => fetchJson(`${BRANDS_BASE}/${id}`, { method: 'DELETE' }),
 };
