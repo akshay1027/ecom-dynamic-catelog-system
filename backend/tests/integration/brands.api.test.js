@@ -1,10 +1,10 @@
 'use strict';
 const request = require('supertest');
 const app = require('../../src/app');
-const brandStore = require('../../src/store/brandStore');
-const store = require('../../src/store/inMemoryStore');
+const brandStore = require('../../src/store/brandIndex');
+const store = require('../../src/store');
 
-beforeEach(() => { brandStore.clear(); store.clear(); });
+beforeEach(async () => { await brandStore.clear(); await store.clear(); });
 
 async function createBrand(overrides = {}) {
   return request(app).post('/api/v1/brands').send({ name: 'Test Brand', ...overrides });
@@ -69,7 +69,7 @@ describe('DELETE /api/v1/brands/:id', () => {
   test('deletes brand and returns 200', async () => {
     const { body: { data: brand } } = await createBrand({ name: 'ToDelete' });
     expect((await request(app).delete(`/api/v1/brands/${brand.id}`)).status).toBe(200);
-    expect(brandStore.findById(brand.id)).toBeNull();
+    expect(await brandStore.findById(brand.id)).toBeNull();
   });
   test('returns 404 for unknown id', async () => {
     expect((await request(app).delete('/api/v1/brands/nope')).status).toBe(404);

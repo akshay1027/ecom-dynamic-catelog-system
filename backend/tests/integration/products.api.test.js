@@ -2,14 +2,14 @@
 
 const request = require('supertest');
 const app = require('../../src/app');
-const store = require('../../src/store/inMemoryStore');
-const brandStore = require('../../src/store/brandStore');
+const store = require('../../src/store');
+const brandStore = require('../../src/store/brandIndex');
 
 let defaultBrandId;
 
 beforeEach(async () => {
-  brandStore.clear();
-  store.clear();
+  await brandStore.clear();
+  await store.clear();
   // Create a default brand for all tests
   const brandRes = await request(app).post('/api/v1/brands').send({ name: 'Default Test Brand' });
   defaultBrandId = brandRes.body.data.id;

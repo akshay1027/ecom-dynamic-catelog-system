@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-catalog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-catalog}
+      POSTGRES_DB: ${POSTGRES_DB:-catalog}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-catalog}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgres://${POSTGRES_USER:-catalog}:${POSTGRES_PASSWORD:-catalog}@postgres:5432/${POSTGRES_DB:-catalog}
+      ALLOWED_ORIGINS: http://localhost:5173
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/migrations:/app/migrations
+      - ./backend/knexfile.js:/app/knexfile.js
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npm run db:migrate && npm run dev"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_BACKEND_URL: http://backend:3001
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

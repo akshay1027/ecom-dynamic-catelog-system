@@ -1,0 +1,837 @@
+╭─── Claude Code v2.1.138 ─────────────────────────────────────────────────────╮
+│                                                    │ What's new              │
+│               Welcome back Hotelzify!              │ Internal fixes          │
+│                                                    │ [VSCode] Fixed extensi… │
+│                      ▗ ▗   ▖ ▖                     │ Added `CLAUDE_CODE_ENA… │
+│                                                    │ /release-notes for more │
+│                        ▘▘ ▝▝                       │                         │
+│                                                    │                         │
+│        Sonnet 4.6 · Claude Pro · Hotelzify         │                         │
+│  ~/Documents/projects/ecom-dynamic-catelog-system  │                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+❯ /compact                                                                      
+  ⎿  Compacted (ctrl+o to see full summary)
+  ⎿  Read eslint.config.mjs (79 lines)
+  ⎿  Read package.json (25 lines)
+  ⎿  Read frontend/package.json (28 lines)
+  ⎿  Read .prettierignore (5 lines)
+  ⎿  Read .prettierrc (8 lines)
+  ⎿  Plan file referenced (~/.claude/plans/before-going-ahead-with-dapper-codd.md)
+
+❯ /context 
+  ⎿  Context Usage
+     ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛁ ⛀ ⛁   Sonnet 4.6
+     ⛁ ⛁ ⛁ ⛁ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   claude-sonnet-4-6
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   29.4k/200k tokens (15%)
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ 
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   Estimated usage by category
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   ⛁ System prompt: 6.5k tokens (3.2%)
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   ⛁ System tools: 8.7k tokens (4.4%)
+     ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶ ⛶   ⛁ Memory files: 2.6k tokens (1.3%)
+     ⛶ ⛶ ⛶ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝   ⛁ Skills: 1.3k tokens (0.6%)
+     ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝   ⛁ Messages: 10.3k tokens (5.2%)
+                           ⛶ Free space: 137.6k (68.8%)
+                           ⛝ Autocompact buffer: 33k tokens (16.5%)
+
+     MCP tools · /mcp (loaded on-demand)
+
+     Available
+     ├ mcp__claude_ai_Google_Drive__authenticate
+     ├ mcp__claude_ai_Google_Drive__complete_authentication
+     ├ mcp__github__add_issue_comment
+     ├ mcp__github__create_branch
+     ├ mcp__github__create_issue
+     ├ mcp__github__create_or_update_file
+     ├ mcp__github__create_pull_request
+     ├ mcp__github__create_pull_request_review
+     ├ mcp__github__create_repository
+     ├ mcp__github__fork_repository
+     ├ mcp__github__get_file_contents
+     ├ mcp__github__get_issue
+     ├ mcp__github__get_pull_request
+     ├ mcp__github__get_pull_request_comments
+     ├ mcp__github__get_pull_request_files
+     ├ mcp__github__get_pull_request_reviews
+     ├ mcp__github__get_pull_request_status
+     ├ mcp__github__list_commits
+     ├ mcp__github__list_issues
+     ├ mcp__github__list_pull_requests
+     ├ mcp__github__merge_pull_request
+     ├ mcp__github__push_files
+     ├ mcp__github__search_code
+     ├ mcp__github__search_issues
+     ├ mcp__github__search_repositories
+     ├ mcp__github__search_users
+     ├ mcp__github__update_issue
+     └ mcp__github__update_pull_request_branch
+
+     Memory files · /memory
+     ├ ~/.claude/CLAUDE.md: 2k tokens
+     ├ CLAUDE.md: 553 tokens
+     └ ~/.claude/projects/-Users-akshayrr-Documents-projects-ecom-dynamic-catelog-system/memory/MEMORY.md: 83 tokens
+
+     Skills · /skills
+
+     Project
+     ├ frontend-design: 104 tokens
+     ├ vercel-react-best-practices: 89 tokens
+     ├ vercel-composition-patterns: 85 tokens
+     ├ skill-creator: 83 tokens
+     ├ find-skills: 79 tokens
+     ├ webapp-testing: 55 tokens
+     └ web-design-guidelines: 52 tokens
+
+     ├ claude-api: 189 tokens
+     ├ update-config: 176 tokens
+     ├ schedule: 95 tokens
+     ├ loop: 85 tokens
+     ├ keybindings-help: 61 tokens
+     ├ fewer-permission-prompts: 47 tokens
+     ├ simplify: 23 tokens
+     ├ security-review: 22 tokens
+     ├ init: 16 tokens
+     └ review: 7 tokens
+
+❯ In current workflow, when is pr created? only when there is a code change?    
+
+⏺ Based on the session pipeline defined in the project's CLAUDE.md:
+
+  write-failing-test (RED) → implement (GREEN) → /write-tests → /review-code →
+  fix P0/P1 → /create-pr
+
+  /create-pr runs after every implementation session — meaning any session where
+   code (or config/tooling) is written or modified. It's not gated on "product
+  code only"; this session (which created GitHub Actions workflows, scripts, and
+   config files) would also trigger it.
+
+  The trigger is: did this session produce any committed changes? If yes →
+  /create-pr runs as the final pipeline step.
+
+  The only sessions that skip it are pure research/analysis sessions where no
+  files were written.
+
+✻ Cogitated for 26s
+
+❯ but in this case, pr is not created. Verify                                   
+
+⏺ Let me verify the current state — checking git log and whether a PR exists for
+   this branch.
+
+⏺ Bash(git -C /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system log
+       --oneline -10 && git -C
+      /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system…)
+  ⎿  3428c4d chore: auto-checkpoint 2026-05-11T12:16
+     fef999b chore: auto-checkpoint 2026-05-11T00:23
+     16605b9 chores: change
+     … +14 lines (ctrl+o to expand)
+
+  Called github (ctrl+o to expand)
+
+⏺ Confirmed — no open PR exists. Let me check what's on this branch vs main to
+  scope the PR.
+
+⏺ Bash(git -C /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system log
+       main..HEAD --oneline)
+  ⎿  3428c4d chore: auto-checkpoint 2026-05-11T12:16
+     fef999b chore: auto-checkpoint 2026-05-11T00:23
+     16605b9 chores: change
+     … +18 lines (ctrl+o to expand)
+
+⏺ Bash(git -C /Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system
+      diff main...HEAD --stat)
+  ⎿   .claude/settings.json                              |   23 +
+      .claude/skills/find-skills/SKILL.md                |  142 +
+      .claude/skills/frontend-design/LICENSE.txt         |  177 +
+     … +176 lines (ctrl+o to expand)
+
+⏺ Confirmed — no PR exists. The branch has 201 files changed across all the work
+   accumulated since main. Let me write the plan.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Now I have everything I need. The previous plan is complete (all those changes
+   are implemented). I'll overwrite it with the PR creation plan.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ Updated plan
+  ⎿  /plan to preview
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/before-going-ahead-with-dapper-codd.md · 
+     /plan to edit
+     Plan: Create PR for feat/v5-dynamic-variants
+
+     Context
+
+     All implementation from the previous session is complete and
+     auto-committed. No PR exists yet for feat/v5-dynamic-variants. This plan
+     creates the PR via mcp__github__create_pull_request.
+
+     Branch: feat/v5-dynamic-variants → main
+     Repo: akshay1027/ecom-dynamic-catelog-system
+     Last verified: 2026-05-11, mcp__github__list_pull_requests returned []
+
+     ---
+     What's in This PR
+
+     Commits since last merge to main (PR #6 feat/v3-attribute-filters):
+
+     ┌──────────────┬──────────────────────────────────────────────────────────┐
+     │     Area     │                         Changes                          │
+     ├──────────────┼──────────────────────────────────────────────────────────┤
+     │ v4 — Product │ Per-size stock variants (Phase 1)                        │
+     │  Variants    │                                                          │
+     ├──────────────┼──────────────────────────────────────────────────────────┤
+     │ v5 — Dynamic │ Dynamic variant types + multiple values per type;        │
+     │  Variants    │ selectable variant pills in product detail; single       │
+     │              │ variant type enforcement in admin                        │
+     ├──────────────┼──────────────────────────────────────────────────────────┤
+     │ Bug fixes    │ Attribute update replace-not-merge fix; form save-error  │
+     │              │ fix; broken seed image replacements                      │
+     ├──────────────┼──────────────────────────────────────────────────────────┤
+     │              │ pr-test.yml (Jest + Vitest reporter), pr-verify.yml      │
+     │ CI/CD        │ (Claude code review), pr-format.yml (Prettier + ESLint   │
+     │              │ auto-fix); scripts/verify-pr.js                          │
+     ├──────────────┼──────────────────────────────────────────────────────────┤
+     │ Tooling      │ .prettierrc, .prettierignore, eslint.config.mjs (ESLint  │
+     │              │ v9 flat config); root package.json lint/format scripts   │
+     ├──────────────┼──────────────────────────────────────────────────────────┤
+     │ Docs         │ README.md; ADRs 005–010; session docs; evolution docs    │
+     └──────────────┴──────────────────────────────────────────────────────────┘
+
+     ---
+     PR Title
+
+     feat: dynamic variants, product stock variants, and CI/CD workflows
+
+     PR Body
+
+     ## Summary
+
+     - **v4 — Product variants:** Per-size stock tracking on products; store
+     extended with `addVariant`, `updateVariant`, `removeVariant`
+     - **v5 — Dynamic variant types:** Fully dynamic variant dimensions (size,
+     color, etc.) with multiple values each; selectable variant pills in product
+      detail; admin enforces single variant type per product
+     - **Bug fixes:** Attribute update now replaces (not merges) on PATCH; form
+     save-error surfaced to UI; broken seed images replaced
+     - **GitHub CI/CD:** Three workflows trigger on every PR — test reporter
+     (Jest + Vitest table comment), Claude code reviewer (P0/P1 block),
+     auto-formatter (Prettier + ESLint push-back with `[skip ci]`)
+     - **Dev tooling:** ESLint v9 flat config, Prettier config, lint/format npm
+     scripts at root
+
+     ## Test plan
+
+     - [ ] Open a PR → `pr-test` workflow posts Jest + Vitest results table as
+     PR comment
+     - [ ] Open a PR → `pr-verify` workflow posts code review findings (requires
+      `ANTHROPIC_API_KEY` secret set in repo settings)
+     - [ ] Open a PR with formatting issues → `pr-format` workflow commits
+     `style: auto-fix` back to branch
+     - [ ] Backend: `cd backend && npm test` — all suite green
+     - [ ] Frontend: `cd frontend && npm test` — all suite green
+     - [ ] `npm run lint:check` at root — 0 errors
+
+     ## Prerequisites (manual)
+
+     - Add `ANTHROPIC_API_KEY` as a GitHub repo secret: Settings → Secrets and
+     variables → Actions → New repository secret
+
+     🤖 Generated with [Claude Code](https://claude.ai/claude-code)
+
+     ---
+     Execution
+
+     Single tool call: mcp__github__create_pull_request
+
+     {
+       "owner": "akshay1027",
+       "repo": "ecom-dynamic-catelog-system",
+       "title": "feat: dynamic variants, product stock variants, and CI/CD 
+     workflows",
+       "body": "<the PR body above>",
+       "head": "feat/v5-dynamic-variants",
+       "base": "main"
+     }
+
+     Load schema first via ToolSearch select:mcp__github__create_pull_request.
+
+     ---
+     Verification
+
+     After tool call: confirm PR URL is returned and visible at
+     github.com/akshay1027/ecom-dynamic-catelog-system/pulls.
+
+  Called github (ctrl+o to expand)
+
+⏺ PR #11 is open:
+  https://github.com/akshay1027/ecom-dynamic-catelog-system/pull/11
+
+  The three GitHub Actions workflows (pr-test, pr-verify, pr-format) will now
+  trigger automatically on this PR — the first real end-to-end test of the CI/CD
+   pipeline you built. Remember to add ANTHROPIC_API_KEY as a repo secret before
+   checking the pr-verify results.
+
+✻ Cooked for 2m 39s
+
+❯ for which actions I need ANTHROPIC_API_KEY?                                   
+
+⏺ Only pr-verify.yml requires ANTHROPIC_API_KEY.
+
+  Here's the breakdown:
+
+  Workflow: pr-test.yml
+  Needs Key?: No
+  Why: Runs Jest + Vitest locally, no external API
+  ────────────────────────────────────────
+  Workflow: pr-format.yml
+  Needs Key?: No
+  Why: Runs Prettier + ESLint locally, no external API
+  ────────────────────────────────────────
+  Workflow: pr-verify.yml
+  Needs Key?: Yes
+  Why: scripts/verify-pr.js calls claude-sonnet-4-6 via @anthropic-ai/sdk to
+    review the PR diff
+
+  The key is only used in scripts/verify-pr.js at this line:
+  const client = new Anthropic.default(); // reads ANTHROPIC_API_KEY from env
+
+  If the key isn't set, the workflow will fail at the API call — but
+  verify-pr.js is written fail-open, so it'll output {"findings":[]} and exit 0
+  rather than blocking the PR.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+  ⎿  User rejected Claude's plan:
+     ╭─────────────────────────────────────────────────────────────────────────╮
+     │ Plan: Create PR for feat/v5-dynamic-variants                            │
+     │                                                                         │
+     │ Context                                                                 │
+     │                                                                         │
+     │ All implementation from the previous session is complete and            │
+     │ auto-committed. No PR exists yet for feat/v5-dynamic-variants. This     │
+     │ plan creates the PR via mcp__github__create_pull_request.               │
+     │                                                                         │
+     │ Branch: feat/v5-dynamic-variants → main                                 │
+     │ Repo: akshay1027/ecom-dynamic-catelog-system                            │
+     │ Last verified: 2026-05-11, mcp__github__list_pull_requests returned []  │
+     │                                                                         │
+     │ ---                                                                     │
+     │ What's in This PR                                                       │
+     │                                                                         │
+     │ Commits since last merge to main (PR #6 feat/v3-attribute-filters):     │
+     │                                                                         │
+     │ ┌──────────────┬─────────────────────────────────────────────────────── │
+     │ ───┐                                                                    │
+     │ │     Area     │                         Changes                        │
+     │    │                                                                    │
+     │ ├──────────────┼─────────────────────────────────────────────────────── │
+     │ ───┤                                                                    │
+     │ │ v4 — Product │ Per-size stock variants (Phase 1)                      │
+     │    │                                                                    │
+     │ │  Variants    │                                                        │
+     │    │                                                                    │
+     │ ├──────────────┼─────────────────────────────────────────────────────── │
+     │ ───┤                                                                    │
+     │ │ v5 — Dynamic │ Dynamic variant types + multiple values per type;      │
+     │    │                                                                    │
+     │ │  Variants    │ selectable variant pills in product detail; single     │
+     │    │                                                                    │
+     │ │              │ variant type enforcement in admin                      │
+     │    │                                                                    │
+     │ ├──────────────┼─────────────────────────────────────────────────────── │
+     │ ───┤                                                                    │
+     │ │ Bug fixes    │ Attribute update replace-not-merge fix; form           │
+     │ save-error  │                                                           │
+     │ │              │ fix; broken seed image replacements                    │
+     │    │                                                                    │
+     │ ├──────────────┼─────────────────────────────────────────────────────── │
+     │ ───┤                                                                    │
+     │ │              │ pr-test.yml (Jest + Vitest reporter), pr-verify.yml    │
+     │    │                                                                    │
+     │ │ CI/CD        │ (Claude code review), pr-format.yml (Prettier + ESLint │
+     │    │                                                                    │
+     │ │              │ auto-fix); scripts/verify-pr.js                        │
+     │    │                                                                    │
+     │ ├──────────────┼─────────────────────────────────────────────────────── │
+     │ ───┤                                                                    │
+     │ │ Tooling      │ .prettierrc, .prettierignore, eslint.config.mjs        │
+     │ (ESLint  │                                                              │
+     │ │              │ v9 flat config); root package.json lint/format scripts │
+     │    │                                                                    │
+     │ ├──────────────┼─────────────────────────────────────────────────────── │
+     │ ───┤                                                                    │
+     │ │ Docs         │ README.md; ADRs 005–010; session docs; evolution docs  │
+     │    │                                                                    │
+     │ └──────────────┴─────────────────────────────────────────────────────── │
+     │ ───┘                                                                    │
+     │                                                                         │
+     │ ---                                                                     │
+     │ PR Title                                                                │
+     │                                                                         │
+     │ feat: dynamic variants, product stock variants, and CI/CD workflows     │
+     │                                                                         │
+     │ PR Body                                                                 │
+     │                                                                         │
+     │ ## Summary                                                              │
+     │                                                                         │
+     │ - **v4 — Product variants:** Per-size stock tracking on products; store │
+     │  extended with `addVariant`, `updateVariant`, `removeVariant`           │
+     │ - **v5 — Dynamic variant types:** Fully dynamic variant dimensions      │
+     │ (size, color, etc.) with multiple values each; selectable variant pills │
+     │  in product detail; admin enforces single variant type per product      │
+     │ - **Bug fixes:** Attribute update now replaces (not merges) on PATCH;   │
+     │ form save-error surfaced to UI; broken seed images replaced             │
+     │ - **GitHub CI/CD:** Three workflows trigger on every PR — test reporter │
+     │  (Jest + Vitest table comment), Claude code reviewer (P0/P1 block),     │
+     │ auto-formatter (Prettier + ESLint push-back with `[skip ci]`)           │
+     │ - **Dev tooling:** ESLint v9 flat config, Prettier config, lint/format  │
+     │ npm scripts at root                                                     │
+     │                                                                         │
+     │ ## Test plan                                                            │
+     │                                                                         │
+     │ - [ ] Open a PR → `pr-test` workflow posts Jest + Vitest results table  │
+     │ as PR comment                                                           │
+     │ - [ ] Open a PR → `pr-verify` workflow posts code review findings       │
+     │ (requires `ANTHROPIC_API_KEY` secret set in repo settings)              │
+     │ - [ ] Open a PR with formatting issues → `pr-format` workflow commits   │
+     │ `style: auto-fix` back to branch                                        │
+     │ - [ ] Backend: `cd backend && npm test` — all suite green               │
+     │ - [ ] Frontend: `cd frontend && npm test` — all suite green             │
+     │ - [ ] `npm run lint:check` at root — 0 errors                           │
+     │                                                                         │
+     │ ## Prerequisites (manual)                                               │
+     │                                                                         │
+     │ - Add `ANTHROPIC_API_KEY` as a GitHub repo secret: Settings → Secrets   │
+     │ and variables → Actions → New repository secret                         │
+     │ - Only `pr-verify.yml` uses this key (via `scripts/verify-pr.js` →      │
+     │ Claude API). `pr-test.yml` and `pr-format.yml` do not need it.          │
+     │                                                                         │
+     │ 🤖 Generated with [Claude Code](https://claude.ai/claude-code)          │
+     │                                                                         │
+     │ ---                                                                     │
+     │ Execution                                                               │
+     │                                                                         │
+     │ Single tool call: mcp__github__create_pull_request                      │
+     │                                                                         │
+     │ {                                                                       │
+     │   "owner": "akshay1027",                                                │
+     │   "repo": "ecom-dynamic-catelog-system",                                │
+     │   "title": "feat: dynamic variants, product stock variants, and CI/CD   │
+     │ workflows",                                                             │
+     │   "body": "<the PR body above>",                                        │
+     │   "head": "feat/v5-dynamic-variants",                                   │
+     │   "base": "main"                                                        │
+     │ }                                                                       │
+     │                                                                         │
+     │ Load schema first via ToolSearch                                        │
+     │ select:mcp__github__create_pull_request.                                │
+     │                                                                         │
+     │ ---                                                                     │
+     │ Verification                                                            │
+     │                                                                         │
+     │ After tool call: confirm PR URL is returned and visible at              │
+     │ github.com/akshay1027/ecom-dynamic-catelog-system/pulls.                │
+     ╰─────────────────────────────────────────────────────────────────────────╯
+
+❯ What next can we add to the workflow to make it a complete AI OS? check the   
+  /docs folder as well for inspiration.                                         
+
+⏺ Let me explore the docs and current workflow setup in parallel to give you a
+  well-informed answer.
+
+⏺ 2 Explore agents finished (ctrl+o to expand)
+   ├ Explore docs folder for ideas · 10 tool uses · 35.2k tokens
+   │ ⎿  Done
+   └ Explore current workflow/hooks/scripts setup · 11 tool uses · 25.2k tokens
+     ⎿  Done
+
+⏺ Here's a complete picture of what's built vs. what's missing:
+
+  Already in the AI OS:
+  - Pre-tool secret scan, TDD enforcement reminder, auto-test on save, ADR
+  auto-regen
+  - Stop hook: blocks exit on red tests + auto-checkpoint/push
+  - CI: test reporter, Claude code review (P0/P1 block), auto-format with
+  push-back
+
+  Gaps — by impact tier:
+
+  Tier 1 — Already blueprinted in 
+  docs/potential-improvements-features/claude-workflow.md:
+  - Playwright E2E Agent (pr-e2e.yml): 12 browser-level tests across catalog +
+  admin; uploads failure screenshots as artifacts; auto-creates a GitHub issue
+  per failing test. Nothing at the browser layer exists today.
+  - Inline Claude review comments: Today pr-verify.yml posts a single block
+  comment. The docs describe using GitHub's review API
+  (create_pull_request_review) to post comments directly on specific lines in
+  the diff — far more actionable.
+
+  Tier 2 — Not in docs but natural additions:
+  - Coverage delta reporter: Add --coverage to test runs, post a "coverage went
+  from X% → Y%" comment per PR. Currently no visibility into coverage trend.
+  - npm audit security reporter: Run npm audit --json on every PR, post a
+  structured comment with CVEs found. One workflow, no API key needed.
+  - Auto-PR-description: GitHub Action that calls Claude with the diff and
+  generates the PR body automatically (instead of manually running /create-pr).
+  Closes the gap you noticed this session.
+
+  Tier 3 — Intelligence layer:
+  - Auto-ADR trigger: Detect when a PR contains ≥2 approaches in commit messages
+   or CLAUDE.md context and post a comment reminding to create an ADR.
+  - Bundle size tracker: Compare frontend build size on every PR, flag
+  regressions.
+  - API performance benchmark: autocannon against the backend on every PR; post
+  p95 latency.
+
+⏺ User answered Claude's questions:
+  ⎿  · Which of these do you want to add next? → Playwright E2E, Coverage delta 
+     reporter, npm audit reporter
+
+⏺ Three additions — all independent, so all three can be built in parallel. Let
+  me write the plan.
+
+⏺ Updated plan
+  ⎿  /plan to preview
+
+⏺ User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/before-going-ahead-with-dapper-codd.md · 
+     /plan to edit
+     Plan: AI OS Layer 2 — E2E Tests, Coverage Delta, npm Audit
+
+     Context
+
+     The current CI pipeline (pr-test, pr-verify, pr-format) covers
+     unit/integration tests, AI code review, and auto-formatting. Three gaps
+     remain:
+     1. No browser-level verification — a passing unit suite can still have
+     broken UI interactions
+     2. No visibility into coverage trend across PRs
+     3. No dependency security scanning
+
+     All three are independent workflows, built in parallel sub-agents.
+
+     ---
+     Change 1 — Playwright E2E Agent (pr-e2e.yml)
+
+     Blueprinted in docs/potential-improvements-features/claude-workflow.md.
+
+     Files to create/modify
+
+     ┌──────────────────────────────┬───────────────────────────────────────────
+     ┐
+     │             File             │                  Action
+     │
+     ├──────────────────────────────┼───────────────────────────────────────────
+     ┤
+     │ package.json (root)          │ Add @playwright/test devDep + test:e2e
+     │
+     │                              │ script
+     │
+     ├──────────────────────────────┼───────────────────────────────────────────
+     ┤
+     │ playwright.config.js (root)  │ Playwright config
+     │
+     ├──────────────────────────────┼───────────────────────────────────────────
+     ┤
+     │ e2e/tests/catalog.spec.js    │ 6 catalog browser tests
+     │
+     ├──────────────────────────────┼───────────────────────────────────────────
+     ┤
+     │ e2e/tests/admin.spec.js      │ 6 admin browser tests
+     │
+     ├──────────────────────────────┼───────────────────────────────────────────
+     ┤
+     │ .github/workflows/pr-e2e.yml │ New workflow
+     │
+     └──────────────────────────────┴───────────────────────────────────────────
+     ┘
+
+     Playwright config (playwright.config.js)
+
+     import { defineConfig } from '@playwright/test';
+     export default defineConfig({
+       testDir: './e2e/tests',
+       timeout: 30_000,
+       retries: 1,
+       use: {
+         baseURL: 'http://localhost:5173',
+         screenshot: 'only-on-failure',
+         video: 'off',
+       },
+       webServer: [
+         { command: 'cd backend && npm start', port: 3001, reuseExistingServer:
+     false },
+         { command: 'cd frontend && npm run dev -- --port 5173', port: 5173,
+     reuseExistingServer: false },
+       ],
+     });
+
+     e2e/tests/catalog.spec.js (6 tests)
+
+     1. Homepage loads — shows product cards
+     2. Search narrows results by product name
+     3. Category filter reduces visible products
+     4. Clicking a product card opens product detail
+     5. Attribute filter (brand) narrows results
+     6. Variant pills visible on a product with variants
+
+     e2e/tests/admin.spec.js (6 tests)
+
+     1. Admin page loads — shows product list
+     2. "New Product" form opens
+     3. Submit new product — appears in list
+     4. Edit product — changes persist
+     5. Delete product — removed from list
+     6. Add variant type + value — appears on product detail
+
+     Workflow flow (pr-e2e.yml)
+
+     Trigger: pull_request (opened, synchronize, reopened)
+     Permissions: issues: write, pull-requests: write, contents: read
+
+     Steps:
+     1. Checkout + Node 20 + npm ci at root, backend, frontend
+     2. Install Playwright browsers: npx playwright install --with-deps chromium
+     3. npx playwright test --reporter=json > /tmp/e2e-results.json
+     (continue-on-error: true)
+     4. Upload HTML report + screenshots as artifact (always, for debugging)
+     5. actions/github-script@v7:
+       - Parse /tmp/e2e-results.json (schema:
+     suites[].specs[].tests[].results[].status)
+       - Upsert PR comment with pass/fail table + list of failed test titles
+       - For each failed test: check if a [E2E] GitHub issue with that title
+     already exists; if not, create one with label e2e-failure, PR link, and
+     failure message
+     6. Final step: exit 1 if any test failed
+
+     Playwright JSON output schema:
+     suites[].specs[].title          — test name
+     suites[].specs[].tests[].results[0].status  — "passed" | "failed" |
+     "timedOut"
+     suites[].specs[].tests[].results[0].error.message  — failure message
+
+     PR comment fingerprint: c.body.includes('E2E Test Results')
+
+     ---
+     Change 2 — Coverage Delta (enhance pr-test.yml)
+
+     Add --coverage to existing test runs, parse coverage summaries, extend the
+     existing PR comment table with coverage percentages.
+
+     Files to modify
+
+     ┌───────────────────────────────┬──────────────────────────────────────────
+     ┐
+     │             File              │                  Action
+     │
+     ├───────────────────────────────┼──────────────────────────────────────────
+     ┤
+     │ .github/workflows/pr-test.yml │ Add coverage flags + parse + extend PR
+     │
+     │                               │ comment
+     │
+     └───────────────────────────────┴──────────────────────────────────────────
+     ┘
+
+     Coverage output
+
+     Backend (Jest):
+     --coverage --coverageReporters=json-summary
+     --coverageDirectory=/tmp/jest-coverage
+     Output: /tmp/jest-coverage/coverage-summary.json
+     Schema: { total: { lines: { pct }, branches: { pct }, functions: { pct }, 
+     statements: { pct } } }
+
+     Frontend (Vitest):
+     @vitest/coverage-v8 already in frontend/package.json.
+     --coverage --coverage.reporter=json-summary
+     --coverage.reportsDirectory=/tmp/vitest-coverage
+     Output: /tmp/vitest-coverage/coverage-summary.json
+     Same schema as Jest.
+
+     Updated PR comment format
+
+     ## ✅ Test Results
+
+     | Suite | Tests | Passed | Failed | Lines | Branches | Functions |
+     |-------|-------|--------|--------|-------|----------|-----------|
+     | Backend (Jest) | 42 | 42 | 0 | 87% | 78% | 91% |
+     | Frontend (Vitest) | 31 | 31 | 0 | 82% | 74% | 88% |
+
+     Coverage columns only show if coverage JSON files exist (graceful if
+     coverage step fails).
+
+     No delta on first pass
+
+     Baseline comparison (vs. main branch) is deferred — requires artifact
+     storage across runs. First iteration just reports current numbers. Delta
+     can be added in a follow-up once we have baseline artifacts to compare
+     against.
+
+     ---
+     Change 3 — npm Audit Reporter (pr-audit.yml)
+
+     New file: .github/workflows/pr-audit.yml
+
+     Trigger: pull_request (opened, synchronize, reopened)
+     Permissions: pull-requests: write, contents: read
+
+     Workflow flow
+
+     1. Checkout + Node 20
+     2. cd backend && npm ci && npm audit --json > /tmp/audit-backend.json
+     (continue-on-error: true — exit code 1 when vulns found)
+     3. cd frontend && npm ci && npm audit --json > /tmp/audit-frontend.json
+     (continue-on-error: true)
+     4. actions/github-script@v7:
+       - Parse both JSON files
+       - npm audit JSON schema: metadata.vulnerabilities: { critical, high, 
+     moderate, low, info, total }
+       - Vulnerability detail: vulnerabilities[name]: { severity, via[].title, 
+     fixAvailable }
+       - Upsert PR comment with table + critical/high details
+     5. Final step: fail workflow if critical > 0
+
+     PR comment format:
+
+     ## 🔒 Dependency Security Audit
+
+     | Package | Severity | Critical | High | Moderate | Low |
+     |---------|----------|----------|------|----------|-----|
+     | Backend | ✅ Clean | 0 | 0 | 0 | 0 |
+     | Frontend | ⚠️ Moderate | 0 | 0 | 2 | 1 |
+
+     ### ⚠️ Moderate vulnerabilities (Frontend)
+     - `some-dep@1.2.3` — ReDoS via crafted input (fix available: upgrade to
+     1.2.4)
+
+     Blocking rule: Workflow fails on critical > 0 only. High/moderate/low are
+     reported but non-blocking (many projects carry acceptable moderate vulns).
+
+     PR comment fingerprint: c.body.includes('Dependency Security Audit')
+
+     ---
+     Execution Order
+
+     All three changes are independent. Spawn three sub-agents simultaneously:
+     - Agent A: Playwright E2E workflow + test files
+     - Agent B: Coverage delta (pr-test.yml enhancement)
+     - Agent C: npm audit workflow
+
+     ---
+     Verification
+
+     1. E2E: Open a PR → pr-e2e workflow runs, posts pass/fail table. Break a UI
+      element → failing test appears + GitHub issue auto-created with label
+     e2e-failure.
+     2. Coverage: Open a PR → existing pr-test comment now includes
+     Lines/Branches/Functions columns per suite.
+     3. Audit: Open a PR → pr-audit workflow posts security table. Introduce a
+     known-vulnerable package → critical finding blocks merge.
+
+⏺ Three independent tasks — launching all three sub-agents simultaneously.
+
+⏺ 3 background agents launched (↓ to manage)
+   ├ Playwright E2E workflow + test files
+   ├ Coverage delta enhancement to pr-test.yml
+   └ npm audit reporter workflow
+
+⏺ All three agents are running in parallel:
+
+  - Agent A — Playwright E2E: exploring the frontend components, writing 12
+  tests, creating playwright.config.js and pr-e2e.yml
+  - Agent B — Coverage delta: modifying pr-test.yml to add --coverage flags and
+  extend the PR comment table
+  - Agent C — npm audit: creating pr-audit.yml from scratch
+
+  I'll notify you when each one completes.
+
+✻ Brewed for 5m 24s
+
+⏺ Agent "Coverage delta enhancement to pr-test.yml" completed
+⏺ Coverage agent done. Let me verify the changes are correct.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Coverage changes look correct — --coverage flags added to both test commands,
+  parseCoverage() helper with graceful N/A fallback, and the table extended to 8
+   columns. Waiting on the other two agents.
+
+✻ Worked for 41s
+
+⏺ Agent "npm audit reporter workflow" completed
+
+⏺ Audit agent done. Let me verify.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ pr-audit.yml looks correct — clean YAML, proper continue-on-error + || true
+  pattern, graceful parseAudit() fallback, upsert comment, and critical-only
+  blocking. Still waiting on the Playwright agent.
+
+✻ Sautéed for 29s
+
+⏺ Agent "Playwright E2E workflow + test files" completed
+
+⏺ Playwright agent done. Let me verify the key files.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Let me also check the test files quickly.
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Let me check the root package.json to verify Playwright was added.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ All three agents completed successfully. Everything looks clean. One thing to
+  flag before pushing: @playwright/test was added to package.json but the root
+  package-lock.json needs to be updated, otherwise npm ci in pr-e2e.yml will
+  fail.
+
+⏺ Bash(npm install 2>&1 | tail -5)
+  ⎿  104 packages are looking for funding
+       run `npm fund` for details
+
+     found 0 vulnerabilities
+
+⏺ Good — lockfile updated. Here's the complete summary of what was built:
+
+  Agent B — Coverage delta (pr-test.yml enhanced):
+  - --coverage --coverageReporters=json-summary added to Jest; --coverage 
+  --coverage.reporter=json-summary to Vitest
+  - parseCoverage() helper reads the JSON summary files, returns N/A gracefully
+  if missing
+  - PR comment table extended from 5 → 8 columns: Lines, Branches, Functions
+  appended
+
+  Agent C — npm audit (pr-audit.yml created):
+  - Audits backend and frontend independently, both continue-on-error: true
+  - Posts severity table (critical/high/moderate/low) with details on
+  critical+high vulns
+  - Only blocks merge on critical > 0; moderate/low are informational
+
+  Agent A — Playwright E2E (pr-e2e.yml + test files created):
+  - playwright.config.js uses node src/server.js (verified against
+  backend/package.json), both servers started via webServer array
+  - 6 catalog tests using real component selectors (.product-card,
+  #category-select, .product-detail-overlay, .variant-pill, etc.)
+  - 6 admin tests using form IDs from ProductForm.jsx (#pf-name, #pf-brand,
+  etc.) and .btn-edit/.btn-delete
+  - Workflow: upserts PR comment, creates a e2e-failure GitHub issue per failing
+   test (dedup'd by checking open issues first)
+  - package.json updated with @playwright/test@^1.44.0 + test:e2e script;
+  lockfile updated locally
+
+  The auto-push stop hook will commit and push everything to PR #11 when this
+  session ends, triggering all five CI workflows simultaneously.
+
+✻ Crunched for 1m 16s
