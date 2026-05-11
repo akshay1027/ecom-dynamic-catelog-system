@@ -1,0 +1,201 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        id: playwright
+        run: npx playwright test
+        continue-on-error: true
+        env:
+          # Playwright JSON reporter writes to /tmp/e2e-results.json (configured in playwright.config.js)
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: playwright-report/
+
+      - name: Comment PR and create issues for failures
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // ── Parse results ──────────────────────────────────────────────
+            let results;
+            try {
+              const raw = fs.readFileSync('/tmp/e2e-results.json', 'utf8');
+              results = JSON.parse(raw);
+            } catch (err) {
+              console.error('Could not read e2e-results.json:', err.message);
+              return;
+            }
+
+            // Recursively collect all specs from nested suites
+            function collectSpecs(suites) {
+              const specs = [];
+              for (const suite of (suites || [])) {
+                for (const spec of (suite.specs || [])) {
+                  specs.push(spec);
+                }
+                specs.push(...collectSpecs(suite.suites));
+              }
+              return specs;
+            }
+
+            const allSpecs = collectSpecs(results.suites || []);
+
+            let passed = 0;
+            let failed = 0;
+            const failedTests = [];
+
+            for (const spec of allSpecs) {
+              for (const testRun of (spec.tests || [])) {
+                const result = testRun.results?.[0];
+                const status = result?.status;
+                if (status === 'passed') {
+                  passed++;
+                } else {
+                  failed++;
+                  failedTests.push({
+                    title: spec.title,
+                    errorMessage: result?.error?.message ?? 'No error message captured',
+                  });
+                }
+              }
+            }
+
+            const total = passed + failed;
+            const statusEmoji = failed === 0 ? '✅' : '❌';
+
+            // ── Build summary table ────────────────────────────────────────
+            let tableRows = '';
+            for (const spec of allSpecs) {
+              for (const testRun of (spec.tests || [])) {
+                const result = testRun.results?.[0];
+                const status = result?.status;
+                const icon = status === 'passed' ? '✅' : '❌';
+                tableRows += `| ${icon} | ${spec.title} | ${status ?? 'unknown'} |\n`;
+              }
+            }
+
+            const body = `## E2E Test Results ${statusEmoji}
+
+| | Test | Status |
+|---|---|---|
+${tableRows}
+**Total: ${total} | Passed: ${passed} | Failed: ${failed}**
+
+> Run triggered by PR #${{ github.event.pull_request.number }} — [View full report in artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+
+            // ── Upsert PR comment ──────────────────────────────────────────
+            const prNumber = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const existing = comments.find(c => c.body.includes('E2E Test Results'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
+
+            // ── Create issues for failed tests ─────────────────────────────
+            const prUrl = context.payload.pull_request.html_url;
+
+            for (const { title, errorMessage } of failedTests) {
+              const issueTitle = `[E2E] ${title}`;
+
+              // Ensure the e2e-failure label exists
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: 'e2e-failure',
+                  color: 'd93f0b',
+                  description: 'Automated E2E test failure',
+                });
+              } catch (labelErr) {
+                // 422 = label already exists — that's fine
+                if (labelErr.status !== 422) {
+                  console.error('Unexpected error creating label:', labelErr.message);
+                }
+              }
+
+              // Check if an open issue with this title already exists
+              const { data: existingIssues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'e2e-failure',
+              });
+
+              const alreadyOpen = existingIssues.some(i => i.title === issueTitle);
+              if (alreadyOpen) {
+                console.log(`Issue already open for: ${issueTitle}`);
+                continue;
+              }
+
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                labels: ['e2e-failure'],
+                body: `### E2E Test Failure\n\n**Test:** ${title}\n\n**Error:**\n\`\`\`\n${errorMessage}\n\`\`\`\n\n**PR:** ${prUrl}`,
+              });
+            }
+
+      - name: Fail the job if Playwright tests failed
+        if: steps.playwright.outcome == 'failure'
+        run: exit 1
