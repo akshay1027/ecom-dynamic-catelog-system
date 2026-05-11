@@ -1,34 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import AttributeFilters from '../AttributeFilters/AttributeFilters';
 import './SearchFilter.css';
 
 const CATEGORIES = ['', 'apparel', 'furniture', 'electronics'];
 
 export default function SearchFilter({ onFiltersChange, brands, onClose, attributeSchema = {} }) {
-  const [filters, setFilters] = useState({});
+  // Raw text/number inputs — updated on every keystroke, debounced before propagating
+  const [rawName, setRawName] = useState('');
+  const [rawMinPrice, setRawMinPrice] = useState('');
+  const [rawMaxPrice, setRawMaxPrice] = useState('');
 
-  function update(patch) {
-    const next = { ...filters, ...patch };
-    // Remove empty values
-    Object.keys(next).forEach(k => {
-      if (next[k] === '' || next[k] === undefined) delete next[k];
-    });
-    setFilters(next);
-    onFiltersChange(next);
-  }
+  // Discrete controls — propagate immediately (no debounce needed)
+  const [category, setCategory] = useState('');
+  const [brandId, setBrandId] = useState('');
+  const [attributes, setAttributes] = useState({});
 
-  function handleCategoryChange(category) {
-    const next = { ...filters, category };
-    // Reset attribute filters when category changes
-    delete next.attributes;
-    if (next.category === '') delete next.category;
-    setFilters(next);
+  const debouncedName = useDebounce(rawName, 300);
+  const debouncedMinPrice = useDebounce(rawMinPrice, 300);
+  const debouncedMaxPrice = useDebounce(rawMaxPrice, 300);
+
+  // Skip the initial mount — only propagate on actual user changes
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    const next = {};
+    if (debouncedName) next.name = debouncedName;
+    if (category) next.category = category;
+    if (debouncedMinPrice) next.minPrice = debouncedMinPrice;
+    if (debouncedMaxPrice) next.maxPrice = debouncedMaxPrice;
+    if (brandId) next.brandId = brandId;
+    if (Object.keys(attributes).length > 0) next.attributes = attributes;
     onFiltersChange(next);
+  // onFiltersChange is setFilters from parent useState — stable reference
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedName, debouncedMinPrice, debouncedMaxPrice, category, brandId, attributes]);
+
+  function handleCategoryChange(newCategory) {
+    setCategory(newCategory);
+    setAttributes({}); // reset attribute filters when category changes
   }
 
   function handleReset() {
-    setFilters({});
-    onFiltersChange({});
+    setRawName('');
+    setRawMinPrice('');
+    setRawMaxPrice('');
+    setCategory('');
+    setBrandId('');
+    setAttributes({});
+    onFiltersChange({}); // fire immediately — don't wait for debounce timers to settle
   }
 
   return (
@@ -50,8 +74,8 @@ export default function SearchFilter({ onFiltersChange, brands, onClose, attribu
           className="search-filter__input"
           type="text"
           placeholder="Search products..."
-          value={filters.name || ''}
-          onChange={e => update({ name: e.target.value })}
+          value={rawName}
+          onChange={e => setRawName(e.target.value)}
         />
       </div>
       <div className="search-filter__group">
@@ -59,7 +83,7 @@ export default function SearchFilter({ onFiltersChange, brands, onClose, attribu
         <select
           className="search-filter__select"
           id="category-select"
-          value={filters.category || ''}
+          value={category}
           onChange={e => handleCategoryChange(e.target.value)}
         >
           {CATEGORIES.map(c => (
@@ -74,8 +98,8 @@ export default function SearchFilter({ onFiltersChange, brands, onClose, attribu
           id="min-price"
           type="number"
           min="0"
-          value={filters.minPrice || ''}
-          onChange={e => update({ minPrice: e.target.value })}
+          value={rawMinPrice}
+          onChange={e => setRawMinPrice(e.target.value)}
         />
       </div>
       <div className="search-filter__group">
@@ -85,8 +109,8 @@ export default function SearchFilter({ onFiltersChange, brands, onClose, attribu
           id="max-price"
           type="number"
           min="0"
-          value={filters.maxPrice || ''}
-          onChange={e => update({ maxPrice: e.target.value })}
+          value={rawMaxPrice}
+          onChange={e => setRawMaxPrice(e.target.value)}
         />
       </div>
       {brands && brands.length > 0 && (
@@ -95,8 +119,8 @@ export default function SearchFilter({ onFiltersChange, brands, onClose, attribu
           <select
             id="brand-select"
             className="search-filter__select"
-            value={filters.brandId || ''}
-            onChange={e => update({ brandId: e.target.value })}
+            value={brandId}
+            onChange={e => setBrandId(e.target.value)}
           >
             <option value="">All brands</option>
             {brands.map(b => (
@@ -108,12 +132,8 @@ export default function SearchFilter({ onFiltersChange, brands, onClose, attribu
       {Object.keys(attributeSchema).length > 0 && (
         <AttributeFilters
           schema={attributeSchema}
-          value={filters.attributes || {}}
-          onChange={attrs => {
-            const next = { ...filters, attributes: attrs };
-            setFilters(next);
-            onFiltersChange(next);
-          }}
+          value={attributes}
+          onChange={setAttributes}
         />
       )}
       <button className="search-filter__reset" onClick={handleReset}>Reset</button>

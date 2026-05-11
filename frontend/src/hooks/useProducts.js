@@ -1,40 +1,54 @@
 import { useState, useEffect } from 'react';
 import { productsApi, brandsApi } from '../api/products';
 
+// Module-level cache — persists across component mounts for the app's lifetime
+const productCache = new Map();
+
+export function invalidateProductCache() {
+  productCache.clear();
+}
+
 export function useProducts(filters = {}) {
-  const [items, setItems] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = JSON.stringify(filters);
+
+  // Lazy initializers — synchronously read cache so no loading flash on cache hit
+  const [items, setItems] = useState(() => productCache.get(cacheKey)?.items || []);
+  const [total, setTotal] = useState(() => productCache.get(cacheKey)?.total || 0);
+  const [loading, setLoading] = useState(() => !productCache.has(cacheKey));
   const [error, setError] = useState(null);
 
-  const filtersKey = JSON.stringify(filters);
-
   useEffect(() => {
-    let cancelled = false;
+    const cached = productCache.get(cacheKey);
+    if (cached) {
+      setItems(cached.items);
+      setTotal(cached.total);
+      setLoading(false);
+      setError(null);
+      return; // no async operation — no cleanup needed
+    }
+
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
 
-    productsApi.list(filters)
+    productsApi.list(filters, controller.signal)
       .then((data) => {
-        if (!cancelled) {
-          setItems(data.items || []);
-          setTotal(data.total || 0);
-          setLoading(false);
-        }
+        const result = { items: data.items || [], total: data.total || 0 };
+        productCache.set(cacheKey, result); // only cache successes
+        setItems(result.items);
+        setTotal(result.total);
+        setLoading(false);
       })
       .catch((err) => {
-        if (!cancelled) {
-          setError(err.message);
-          setItems([]);
-          setLoading(false);
-        }
+        if (err.name === 'AbortError') return; // request cancelled — ignore silently
+        setError(err.message);
+        setItems([]);
+        setLoading(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersKey]);
+  }, [cacheKey]);
 
   return { items, total, loading, error };
 }
@@ -45,13 +59,16 @@ export function useAttributeSchema({ category } = {}) {
 
   useEffect(() => {
     if (!category) { setSchema({}); return; }
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
-    productsApi.getAttributeSchema({ category })
-      .then(schema => { if (!cancelled) setSchema(schema || {}); })
-      .catch(() => { if (!cancelled) setSchema({}); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    productsApi.getAttributeSchema({ category }, controller.signal)
+      .then(s => { setSchema(s || {}); setLoading(false); })
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        setSchema({});
+        setLoading(false);
+      });
+    return () => { controller.abort(); };
   }, [category]);
 
   return { schema, loading };
@@ -62,9 +79,15 @@ export function useBrands() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    brandsApi.list()
+    const controller = new AbortController();
+    brandsApi.list(controller.signal)
       .then(data => { setBrands(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => { setBrands([]); setLoading(false); });
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        setBrands([]);
+        setLoading(false);
+      });
+    return () => { controller.abort(); };
   }, []);
 
   return { brands, loading };
