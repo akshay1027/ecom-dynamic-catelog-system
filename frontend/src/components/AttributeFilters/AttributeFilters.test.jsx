@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import AttributeFilters from './AttributeFilters';
 
 const stringSchema = {
@@ -37,6 +37,8 @@ describe('AttributeFilters', () => {
     expect(checkbox).toBeTruthy();
   });
 
+  // --- String/boolean controls: fire immediately (no debounce) ---
+
   it('calls onChange with array when string checkbox is checked', () => {
     const onChange = vi.fn();
     render(<AttributeFilters schema={stringSchema} value={{}} onChange={onChange} />);
@@ -49,13 +51,6 @@ describe('AttributeFilters', () => {
     render(<AttributeFilters schema={stringSchema} value={{ color: ['red', 'blue'] }} onChange={onChange} />);
     fireEvent.click(screen.getByRole('checkbox', { name: /red/i }));
     expect(onChange).toHaveBeenCalledWith({ color: ['blue'] });
-  });
-
-  it('calls onChange with range object when number min input changes', () => {
-    const onChange = vi.fn();
-    render(<AttributeFilters schema={numberSchema} value={{}} onChange={onChange} />);
-    fireEvent.change(screen.getByPlaceholderText('Min (8)'), { target: { value: '16' } });
-    expect(onChange).toHaveBeenCalledWith({ ram_gb: { min: '16', max: undefined } });
   });
 
   it('calls onChange with true for boolean when checked', () => {
@@ -85,5 +80,59 @@ describe('AttributeFilters', () => {
     render(<AttributeFilters schema={stringSchema} value={{ color: ['red'] }} onChange={onChange} />);
     fireEvent.click(screen.getByRole('button', { name: /clear/i }));
     expect(onChange).toHaveBeenCalledWith({});
+  });
+
+  // --- Number inputs: debounced (300ms) ---
+
+  describe('number attribute inputs (debounced)', () => {
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('does NOT call onChange immediately when number min input changes', () => {
+      const onChange = vi.fn();
+      render(<AttributeFilters schema={numberSchema} value={{}} onChange={onChange} />);
+      fireEvent.change(screen.getByPlaceholderText('Min (8)'), { target: { value: '16' } });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('calls onChange with range object after 300ms when number min input changes', () => {
+      const onChange = vi.fn();
+      render(<AttributeFilters schema={numberSchema} value={{}} onChange={onChange} />);
+      fireEvent.change(screen.getByPlaceholderText('Min (8)'), { target: { value: '16' } });
+      act(() => { vi.advanceTimersByTime(300); });
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        ram_gb: expect.objectContaining({ min: '16' })
+      }));
+    });
+
+    it('does NOT call onChange immediately when number max input changes', () => {
+      const onChange = vi.fn();
+      render(<AttributeFilters schema={numberSchema} value={{}} onChange={onChange} />);
+      fireEvent.change(screen.getByPlaceholderText('Max (32)'), { target: { value: '24' } });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('calls onChange with both min and max after settling', () => {
+      const onChange = vi.fn();
+      render(<AttributeFilters schema={numberSchema} value={{}} onChange={onChange} />);
+      fireEvent.change(screen.getByPlaceholderText('Min (8)'), { target: { value: '8' } });
+      fireEvent.change(screen.getByPlaceholderText('Max (32)'), { target: { value: '24' } });
+      act(() => { vi.advanceTimersByTime(300); });
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+        ram_gb: expect.objectContaining({ min: '8', max: '24' })
+      }));
+    });
+
+    it('clears number range when value prop resets to {}', () => {
+      const onChange = vi.fn();
+      const { rerender } = render(
+        <AttributeFilters schema={numberSchema} value={{}} onChange={onChange} />
+      );
+      fireEvent.change(screen.getByPlaceholderText('Min (8)'), { target: { value: '16' } });
+      // Reset parent value to empty
+      rerender(<AttributeFilters schema={numberSchema} value={{}} onChange={onChange} />);
+      // Input should show empty
+      expect(screen.getByPlaceholderText('Min (8)').value).toBe('');
+    });
   });
 });

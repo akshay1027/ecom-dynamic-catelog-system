@@ -44,16 +44,16 @@ function buildQuery(filters) {
 }
 
 export const productsApi = {
-  list: (filters = {}) => fetchJson(buildQuery(filters)),
+  list: (filters = {}, signal) => fetchJson(buildQuery(filters), { signal }),
   getById: (id) => fetchJson(`${BASE}/${id}`),
   create: (data) => fetchJson(BASE, { method: 'POST', body: JSON.stringify(data) }),
   update: (id, patch) => fetchJson(`${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
   remove: (id) => fetchJson(`${BASE}/${id}`, { method: 'DELETE' }),
-  getAttributeSchema: (filters = {}) => {
+  getAttributeSchema: (filters = {}, signal) => {
     const params = new URLSearchParams();
     if (filters.category) params.set('category', filters.category);
     const qs = params.toString();
-    return fetchJson(qs ? `${BASE}/attributes/schema?${qs}` : `${BASE}/attributes/schema`);
+    return fetchJson(qs ? `${BASE}/attributes/schema?${qs}` : `${BASE}/attributes/schema`, { signal });
   },
   addVariant: (productId, variantData) =>
     fetchJson(`${BASE}/${productId}/variants`, { method: 'POST', body: JSON.stringify(variantData) }),
@@ -64,5 +64,5 @@ export const productsApi = {
 };
 
 export const brandsApi = {
-  list: () => fetchJson(BRANDS_BASE),
+  list: (signal) => fetchJson(BRANDS_BASE, { signal }),
 };

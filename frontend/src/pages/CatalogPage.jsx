@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useDeferredValue } from 'react';
 import { useProducts, useBrands, useAttributeSchema } from '../hooks/useProducts';
 import ProductList from '../components/ProductList/ProductList';
 import SearchFilter from '../components/SearchFilter/SearchFilter';
@@ -9,9 +9,14 @@ export default function CatalogPage() {
   const [filters, setFilters] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { items, total, loading, error } = useProducts(filters);
+
+  // Defer filter-driven fetches so input state updates render at full priority
+  const deferredFilters = useDeferredValue(filters);
+  const isStale = filters !== deferredFilters;
+
+  const { items, total, loading, error } = useProducts(deferredFilters);
   const { brands } = useBrands();
-  const { schema: attributeSchema } = useAttributeSchema({ category: filters.category });
+  const { schema: attributeSchema } = useAttributeSchema({ category: deferredFilters.category });
 
   return (
     <div className="catalog-layout">
@@ -38,12 +43,14 @@ export default function CatalogPage() {
             &#8801; Filters
           </button>
         </div>
-        <ProductList
-          products={items}
-          loading={loading}
-          error={error}
-          onProductClick={setSelectedProduct}
-        />
+        <div style={{ opacity: isStale || loading ? 0.6 : 1, transition: 'opacity 0.15s' }}>
+          <ProductList
+            products={items}
+            loading={loading}
+            error={error}
+            onProductClick={setSelectedProduct}
+          />
+        </div>
       </main>
 
       {selectedProduct && (

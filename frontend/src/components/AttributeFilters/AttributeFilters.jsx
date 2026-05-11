@@ -1,8 +1,44 @@
+import { useState, useEffect, useRef } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import './AttributeFilters.css';
 
 export default function AttributeFilters({ schema = {}, value = {}, onChange }) {
   const keys = Object.keys(schema).sort();
   if (keys.length === 0) return null;
+
+  // Internal raw state for number inputs: { 'attrKey:min': '16', 'attrKey:max': '' }
+  // Avoids hooks-in-loops by debouncing the whole map as one value
+  const [rawNumbers, setRawNumbers] = useState({});
+  const debouncedNumbers = useDebounce(rawNumbers, 300);
+
+  // Always-current reference to value prop — avoids stale closure in the effect below
+  const valueRef = useRef(value);
+  useEffect(() => { valueRef.current = value; }, [value]);
+
+  // When debounced number inputs settle, merge them into current value and notify parent
+  useEffect(() => {
+    if (Object.keys(debouncedNumbers).length === 0) return;
+    const merged = { ...valueRef.current };
+    Object.entries(debouncedNumbers).forEach(([compositeKey, inputVal]) => {
+      const [attrKey, bound] = compositeKey.split(':');
+      const current = (merged[attrKey] && typeof merged[attrKey] === 'object') ? merged[attrKey] : {};
+      if (inputVal !== '') {
+        merged[attrKey] = { ...current, [bound]: inputVal };
+      } else {
+        const updated = { ...current };
+        delete updated[bound];
+        if (Object.keys(updated).length === 0) delete merged[attrKey];
+        else merged[attrKey] = updated;
+      }
+    });
+    onChange(merged);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedNumbers]);
+
+  // Reset raw number inputs when parent resets value to {} (e.g., Reset button)
+  useEffect(() => {
+    if (Object.keys(value).length === 0) setRawNumbers({});
+  }, [value]);
 
   const hasAnyFilter = Object.keys(value).some(k => {
     const v = value[k];
@@ -18,8 +54,7 @@ export default function AttributeFilters({ schema = {}, value = {}, onChange }) 
   }
 
   function handleNumberChange(key, bound, inputVal) {
-    const current = (value[key] && typeof value[key] === 'object') ? value[key] : {};
-    onChange({ ...value, [key]: { ...current, [bound]: inputVal } });
+    setRawNumbers(prev => ({ ...prev, [`${key}:${bound}`]: inputVal }));
   }
 
   function handleBoolChange(key, checked) {
@@ -72,14 +107,14 @@ export default function AttributeFilters({ schema = {}, value = {}, onChange }) 
                   type="number"
                   className="attr-range-input"
                   placeholder={`Min (${entry.min})`}
-                  value={(value[key] && value[key].min) || ''}
+                  value={rawNumbers[`${key}:min`] !== undefined ? rawNumbers[`${key}:min`] : (value[key] && value[key].min) || ''}
                   onChange={e => handleNumberChange(key, 'min', e.target.value)}
                 />
                 <input
                   type="number"
                   className="attr-range-input"
                   placeholder={`Max (${entry.max})`}
-                  value={(value[key] && value[key].max) || ''}
+                  value={rawNumbers[`${key}:max`] !== undefined ? rawNumbers[`${key}:max`] : (value[key] && value[key].max) || ''}
                   onChange={e => handleNumberChange(key, 'max', e.target.value)}
                 />
               </div>
