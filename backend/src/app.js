@@ -2,6 +2,8 @@
 
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const authRouter = require('./routes/auth');
 const productsRouter = require('./routes/products');
 const brandsRouter = require('./routes/brands');
 
@@ -9,13 +11,16 @@ const app = express();
 
 app.use(express.json({ limit: '1mb' }));
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',')
+  origin: process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',')
     : ['http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type'],
+  credentials: true,
 }));
+app.use(cookieParser());
 
+app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/products', productsRouter);
 app.use('/api/v1/brands', brandsRouter);
 
