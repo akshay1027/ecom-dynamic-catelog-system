@@ -1,0 +1,139 @@
+name: PR Security Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit backend dependencies
+        id: audit-backend
+        working-directory: backend
+        continue-on-error: true
+        run: npm ci && npm audit --json > /tmp/audit-backend.json || true
+
+      - name: Audit frontend dependencies
+        id: audit-frontend
+        working-directory: frontend
+        continue-on-error: true
+        run: npm ci && npm audit --json > /tmp/audit-frontend.json || true
+
+      - name: Post audit comment
+        id: post-comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            function parseAudit(path) {
+              try {
+                const raw = fs.readFileSync(path, 'utf8');
+                const data = JSON.parse(raw);
+                // npm audit v2 JSON schema
+                const meta = data.metadata?.vulnerabilities ?? {};
+                const vulns = data.vulnerabilities ?? {};
+
+                const counts = {
+                  critical: meta.critical ?? 0,
+                  high: meta.high ?? 0,
+                  moderate: meta.moderate ?? 0,
+                  low: meta.low ?? 0,
+                  info: meta.info ?? 0,
+                  total: meta.total ?? 0,
+                };
+
+                // Collect critical + high details
+                const blocking = [];
+                for (const [name, vuln] of Object.entries(vulns)) {
+                  if (vuln.severity === 'critical' || vuln.severity === 'high') {
+                    const via = Array.isArray(vuln.via) ? vuln.via.filter(v => typeof v === 'object') : [];
+                    const title = via[0]?.title ?? 'Unknown vulnerability';
+                    const fixAvailable = vuln.fixAvailable ? '✅ fix available' : '❌ no fix';
+                    blocking.push(`- \`${name}\` — ${title} (${fixAvailable})`);
+                  }
+                }
+
+                return { counts, blocking, error: null };
+              } catch (e) {
+                return { counts: { critical: 0, high: 0, moderate: 0, low: 0, info: 0, total: 0 }, blocking: [], error: e.message };
+              }
+            }
+
+            const backend = parseAudit('/tmp/audit-backend.json');
+            const frontend = parseAudit('/tmp/audit-frontend.json');
+
+            function statusEmoji(counts) {
+              if (counts.critical > 0) return '🔴 Critical';
+              if (counts.high > 0) return '🟠 High';
+              if (counts.moderate > 0) return '🟡 Moderate';
+              if (counts.total === 0) return '✅ Clean';
+              return '🔵 Low';
+            }
+
+            const allBlocking = [...backend.blocking, ...frontend.blocking];
+            const totalCritical = backend.counts.critical + frontend.counts.critical;
+
+            let body = `## 🔒 Dependency Security Audit\n\n`;
+            body += `| Package | Status | Critical | High | Moderate | Low |\n`;
+            body += `|---------|--------|----------|------|----------|-----|\n`;
+            body += `| Backend | ${statusEmoji(backend.counts)} | ${backend.counts.critical} | ${backend.counts.high} | ${backend.counts.moderate} | ${backend.counts.low} |\n`;
+            body += `| Frontend | ${statusEmoji(frontend.counts)} | ${frontend.counts.critical} | ${frontend.counts.high} | ${frontend.counts.moderate} | ${frontend.counts.low} |\n`;
+
+            if (allBlocking.length > 0) {
+              body += `\n### ⚠️ Critical / High vulnerabilities\n${allBlocking.join('\n')}\n`;
+            }
+
+            if (totalCritical === 0) {
+              body += `\n> No critical vulnerabilities. Workflow passes.`;
+            } else {
+              body += `\n> ❌ ${totalCritical} critical vulnerability/vulnerabilities found. Merge is blocked.`;
+            }
+
+            // Upsert comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes('Dependency Security Audit'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+            // Write critical count to output for next step
+            core.setOutput('critical', String(totalCritical));
+
+      - name: Fail on critical vulnerabilities
+        if: steps.post-comment.outputs.critical != '0'
+        run: |
+          echo "Critical vulnerabilities found. Blocking merge."
+          exit 1

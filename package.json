@@ -6,7 +6,21 @@
     "test:backend": "cd backend && npm test",
     "test:frontend": "cd frontend && npm test",
     "test": "npm run test:backend && npm run test:frontend",
+    "test:e2e": "playwright test",
     "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev"
+    "dev:frontend": "cd frontend && npm run dev",
+    "format:check": "prettier --check \"**/*.{js,jsx,json,md}\" --ignore-path .prettierignore",
+    "format:fix": "prettier --write \"**/*.{js,jsx,json,md}\" --ignore-path .prettierignore",
+    "lint:check": "eslint backend frontend",
+    "lint:fix": "eslint backend frontend --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.44.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.2.5"
   }
 }

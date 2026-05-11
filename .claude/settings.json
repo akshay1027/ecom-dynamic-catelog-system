@@ -19,6 +19,17 @@
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ROOT=/Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system; bash \"$ROOT/scripts/check-secrets.sh\" \"$CLAUDE_TOOL_INPUT_FILE_PATH\""
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
@@ -26,6 +37,14 @@
           {
             "type": "command",
             "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; ROOT=/Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system; if [[ \"$FILE\" == */backend/* ]]; then cd \"$ROOT/backend\" && npm test --silent 2>&1 | tail -25; elif [[ \"$FILE\" == */frontend/* ]]; then cd \"$ROOT/frontend\" && npm test --silent 2>&1 | tail -25; fi"
+          },
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; if [[ \"$FILE\" == */backend/src/* || \"$FILE\" == */frontend/src/* ]]; then if [[ \"$FILE\" != *.test.js && \"$FILE\" != *.test.jsx && \"$FILE\" != *.spec.js && \"$FILE\" != *.spec.jsx ]]; then echo \"TDD CHECK: Did you write and confirm a failing test BEFORE this edit? If not, stop and write it now (RED before GREEN).\"; fi; fi"
+          },
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; ROOT=/Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system; if [[ \"$FILE\" == */docs/adr/ADR-*.md ]]; then bash \"$ROOT/scripts/regen-adr-index.sh\"; fi"
           }
         ]
       }
@@ -36,6 +55,10 @@
           {
             "type": "command",
             "command": "ROOT=/Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system; FAIL=0; if [ -d \"$ROOT/backend\" ] && [ -f \"$ROOT/backend/package.json\" ]; then cd \"$ROOT/backend\" && npm test --silent 2>/dev/null || FAIL=1; fi; if [ -d \"$ROOT/frontend\" ] && [ -f \"$ROOT/frontend/package.json\" ]; then cd \"$ROOT/frontend\" && npm test --silent 2>/dev/null || FAIL=1; fi; if [ $FAIL -eq 1 ]; then echo 'BLOCKED: Tests are failing. Fix red tests before stopping.'; exit 2; fi"
+          },
+          {
+            "type": "command",
+            "command": "ROOT=/Users/akshayrr/Documents/projects/ecom-dynamic-catelog-system; bash \"$ROOT/scripts/auto-push.sh\""
           }
         ]
       }

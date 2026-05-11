@@ -1,0 +1,159 @@
+name: PR Test Suite
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Run backend tests
+        id: backend_tests
+        run: npx jest --json --outputFile=/tmp/jest-results.json --passWithNoTests --coverage --coverageReporters=json-summary --coverageDirectory=/tmp/jest-coverage
+        working-directory: backend
+        continue-on-error: true
+
+      - name: Run frontend tests
+        id: frontend_tests
+        run: npx vitest run --reporter=json --outputFile=/tmp/vitest-results.json --coverage --coverage.reporter=json-summary --coverage.reportsDirectory=/tmp/vitest-coverage
+        working-directory: frontend
+        continue-on-error: true
+
+      - name: Post PR comment with results
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            function parseCoverage(path) {
+              try {
+                const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+                const t = data.total;
+                return {
+                  lines: t.lines.pct.toFixed(1) + '%',
+                  branches: t.branches.pct.toFixed(1) + '%',
+                  functions: t.functions.pct.toFixed(1) + '%',
+                };
+              } catch {
+                return { lines: 'N/A', branches: 'N/A', functions: 'N/A' };
+              }
+            }
+
+            const backendCov = parseCoverage('/tmp/jest-coverage/coverage-summary.json');
+            const frontendCov = parseCoverage('/tmp/vitest-coverage/coverage-summary.json');
+
+            let backendStatus = '✅ Passed';
+            let backendTests = 0, backendPassed = 0, backendFailed = 0;
+            let backendFailedNames = [];
+            try {
+              const data = JSON.parse(fs.readFileSync('/tmp/jest-results.json', 'utf8'));
+              backendTests  = data.numTotalTests  || 0;
+              backendPassed = data.numPassedTests || 0;
+              backendFailed = data.numFailedTests || 0;
+              if (backendFailed > 0) {
+                backendStatus = '❌ Failed';
+                for (const suite of (data.testResults || [])) {
+                  for (const t of (suite.testResults || [])) {
+                    if (t.status === 'failed') backendFailedNames.push(t.fullName || t.title);
+                  }
+                }
+              }
+              if (backendTests === 0) backendStatus = '⏭️ No Tests';
+            } catch (e) {
+              backendStatus = '⚠️ Error';
+            }
+
+            let frontendStatus = '✅ Passed';
+            let frontendTests = 0, frontendPassed = 0, frontendFailed = 0;
+            let frontendFailedNames = [];
+            try {
+              const data = JSON.parse(fs.readFileSync('/tmp/vitest-results.json', 'utf8'));
+              frontendTests  = data.numTotalTests  || 0;
+              frontendPassed = data.numPassedTests || 0;
+              frontendFailed = data.numFailedTests || 0;
+              if (frontendFailed > 0) {
+                frontendStatus = '❌ Failed';
+                for (const suite of (data.testResults || [])) {
+                  for (const t of (suite.results || [])) {
+                    if (t.state === 'fail') frontendFailedNames.push(t.title || '(unnamed)');
+                  }
+                }
+              }
+              if (frontendTests === 0) frontendStatus = '⏭️ No Tests';
+            } catch (e) {
+              frontendStatus = '⚠️ Error';
+            }
+
+            const allPassed = backendFailed === 0 && frontendFailed === 0;
+            const header = allPassed ? '## ✅ All tests passed' : '## ❌ Test failures detected';
+
+            let body = `${header}\n\n`;
+            body += `| Suite | Status | Tests | Passed | Failed | Lines | Branches | Functions |\n`;
+            body += `|-------|--------|-------|--------|--------|-------|----------|-----------|\n`;
+            body += `| Backend (Jest) | ${backendStatus} | ${backendTests} | ${backendPassed} | ${backendFailed} | ${backendCov.lines} | ${backendCov.branches} | ${backendCov.functions} |\n`;
+            body += `| Frontend (Vitest) | ${frontendStatus} | ${frontendTests} | ${frontendPassed} | ${frontendFailed} | ${frontendCov.lines} | ${frontendCov.branches} | ${frontendCov.functions} |\n`;
+
+            if (backendFailedNames.length > 0) {
+              body += `\n### Backend failures\n` + backendFailedNames.map(n => `- \`${n}\``).join('\n');
+            }
+            if (frontendFailedNames.length > 0) {
+              body += `\n### Frontend failures\n` + frontendFailedNames.map(n => `- \`${n}\``).join('\n');
+            }
+
+            body += `\n\n<sub>Run: \`${context.sha.slice(0,7)}\` · ${new Date().toISOString()}</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Backend (Jest)')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail if tests failed
+        if: steps.backend_tests.outcome == 'failure' || steps.frontend_tests.outcome == 'failure'
+        run: |
+          echo "One or more test suites failed. See PR comment for details."
+          exit 1
