@@ -34,13 +34,13 @@ jobs:
 
       - name: Run backend tests
         id: backend_tests
-        run: npx jest --json --outputFile=/tmp/jest-results.json --passWithNoTests
+        run: npx jest --json --outputFile=/tmp/jest-results.json --passWithNoTests --coverage --coverageReporters=json-summary --coverageDirectory=/tmp/jest-coverage
         working-directory: backend
         continue-on-error: true
 
       - name: Run frontend tests
         id: frontend_tests
-        run: npx vitest run --reporter=json --outputFile=/tmp/vitest-results.json
+        run: npx vitest run --reporter=json --outputFile=/tmp/vitest-results.json --coverage --coverage.reporter=json-summary --coverage.reportsDirectory=/tmp/vitest-coverage
         working-directory: frontend
         continue-on-error: true
 
@@ -50,6 +50,23 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+
+            function parseCoverage(path) {
+              try {
+                const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+                const t = data.total;
+                return {
+                  lines: t.lines.pct.toFixed(1) + '%',
+                  branches: t.branches.pct.toFixed(1) + '%',
+                  functions: t.functions.pct.toFixed(1) + '%',
+                };
+              } catch {
+                return { lines: 'N/A', branches: 'N/A', functions: 'N/A' };
+              }
+            }
+
+            const backendCov = parseCoverage('/tmp/jest-coverage/coverage-summary.json');
+            const frontendCov = parseCoverage('/tmp/vitest-coverage/coverage-summary.json');
 
             let backendStatus = '✅ Passed';
             let backendTests = 0, backendPassed = 0, backendFailed = 0;
@@ -97,10 +114,10 @@ jobs:
             const header = allPassed ? '## ✅ All tests passed' : '## ❌ Test failures detected';
 
             let body = `${header}\n\n`;
-            body += `| Suite | Status | Tests | Passed | Failed |\n`;
-            body += `|-------|--------|-------|--------|--------|\n`;
-            body += `| Backend (Jest) | ${backendStatus} | ${backendTests} | ${backendPassed} | ${backendFailed} |\n`;
-            body += `| Frontend (Vitest) | ${frontendStatus} | ${frontendTests} | ${frontendPassed} | ${frontendFailed} |\n`;
+            body += `| Suite | Status | Tests | Passed | Failed | Lines | Branches | Functions |\n`;
+            body += `|-------|--------|-------|--------|--------|-------|----------|-----------|\n`;
+            body += `| Backend (Jest) | ${backendStatus} | ${backendTests} | ${backendPassed} | ${backendFailed} | ${backendCov.lines} | ${backendCov.branches} | ${backendCov.functions} |\n`;
+            body += `| Frontend (Vitest) | ${frontendStatus} | ${frontendTests} | ${frontendPassed} | ${frontendFailed} | ${frontendCov.lines} | ${frontendCov.branches} | ${frontendCov.functions} |\n`;
 
             if (backendFailedNames.length > 0) {
               body += `\n### Backend failures\n` + backendFailedNames.map(n => `- \`${n}\``).join('\n');
