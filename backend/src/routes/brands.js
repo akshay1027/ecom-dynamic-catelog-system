@@ -3,6 +3,8 @@
 const router = require('express').Router();
 const brandStore = require('../store/brandIndex');
 const { validateBrand, sanitizeBrand } = require('../models/brand');
+const authenticate = require('../middleware/authenticate');
+const authorize = require('../middleware/authorize');
 
 function sendSuccess(res, data, status = 200) {
   return res.status(status).json({ success: true, data, error: null });
@@ -11,7 +13,7 @@ function sendError(res, code, message, status) {
   return res.status(status).json({ success: false, data: null, error: { code, message } });
 }
 
-router.post('/', async (req, res, next) => {
+router.post('/', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     validateBrand(req.body);
     const brand = await brandStore.create(sanitizeBrand(req.body));
@@ -41,7 +43,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     const updated = await brandStore.update(req.params.id, req.body);
     if (!updated) return sendError(res, 'NOT_FOUND', `Brand ${req.params.id} not found`, 404);
@@ -53,7 +55,7 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     const deleted = await brandStore.remove(req.params.id);
     if (!deleted) return sendError(res, 'NOT_FOUND', `Brand ${req.params.id} not found`, 404);

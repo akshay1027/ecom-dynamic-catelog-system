@@ -13,3 +13,5 @@ _Auto-generated — do not edit manually. Updated by PostToolUse hook whenever a
 | [ADR-008](ADR-008-product-variants.md) | Product Variants with JSONB Options for Size (and Future Color, Material) | Accepted |
 | [ADR-009](ADR-009-dynamic-variant-form-ux.md) | Dynamic Variant Form UX — Variant Type with Value List | Accepted |
 | [ADR-010](ADR-010-single-variant-dimension-per-product.md) | Single Variant Dimension Per Product | Accepted |
+| [ADR-011](ADR-011-database-selection.md) | Database Selection — PostgreSQL via Knex | Accepted |
+| [ADR-012](ADR-012-authentication-strategy.md) | Authentication Strategy — JWT in httpOnly Cookies with Role-Based Authorization | Accepted |

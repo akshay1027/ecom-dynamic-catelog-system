@@ -3,6 +3,7 @@ const BRANDS_BASE = '/api/v1/brands';
 
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });

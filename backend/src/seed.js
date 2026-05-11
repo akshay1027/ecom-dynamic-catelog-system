@@ -2,6 +2,7 @@
 
 const store = require('./store');
 const brandStore = require('./store/brandIndex');
+const userStore = require('./store/userIndex');
 
 const SEED_BRANDS = [
   { name: 'Everyday Basics', description: 'Timeless everyday apparel' },
@@ -379,6 +380,20 @@ async function seed() {
 
   for (const p of buildSeedProducts(brandMap)) {
     await store.create(p);
+  }
+
+  // Seed admin user from env vars if no users exist
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    try {
+      await userStore.create({ email: adminEmail, password: adminPassword, role: 'admin' });
+      console.log(JSON.stringify({ timestamp: new Date().toISOString(), operation: 'seed', message: `Admin user created: ${adminEmail}` }));
+    } catch (err) {
+      if (!err.message.includes('already exists')) throw err;
+    }
+  } else {
+    console.warn(JSON.stringify({ timestamp: new Date().toISOString(), operation: 'seed', message: 'ADMIN_EMAIL or ADMIN_PASSWORD not set — skipping admin user creation' }));
   }
 
   console.log(JSON.stringify({
