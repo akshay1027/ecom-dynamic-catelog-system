@@ -4,4 +4,6 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.js'],
   clearMocks: true,
   collectCoverageFrom: ['src/**/*.js'],
+  globalSetup: './tests/globalSetup.js',
+  globalTeardown: './tests/globalTeardown.js',
 };
