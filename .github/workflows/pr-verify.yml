@@ -1,0 +1,118 @@
+name: PR Code Verification
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install @anthropic-ai/sdk
+        run: npm install @anthropic-ai/sdk
+
+      - name: Get PR diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr.diff
+
+      - name: Run code verification
+        run: node scripts/verify-pr.js /tmp/pr.diff > /tmp/findings.json
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Post findings as PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let findings = [];
+            let parseError = null;
+            try {
+              findings = JSON.parse(fs.readFileSync('/tmp/findings.json', 'utf8')).findings || [];
+            } catch (e) {
+              parseError = e.message;
+            }
+
+            const p0 = findings.filter(f => f.severity === 'P0');
+            const p1 = findings.filter(f => f.severity === 'P1');
+            const p2 = findings.filter(f => f.severity === 'P2');
+            const hasCritical = p0.length > 0 || p1.length > 0;
+
+            const header = parseError
+              ? '## ⚠️ Code Verification — Parse Error'
+              : hasCritical
+                ? '## ❌ Code Review: Blocking issues found'
+                : '## ✅ Code Review: No blocking issues';
+
+            function renderFindings(list, label) {
+              if (!list.length) return '';
+              return `\n### ${label} (${list.length})\n` +
+                list.map(f => `- **\`${f.file}\`** line ${f.line ?? '?'}: ${f.message}`).join('\n');
+            }
+
+            let body = `${header}\n`;
+            if (parseError) {
+              body += `\nFailed to parse findings: \`${parseError}\`\n`;
+            } else if (!findings.length) {
+              body += '\nNo issues found against project rules.\n';
+            } else {
+              body += renderFindings(p0, '🔴 P0 — Must fix');
+              body += renderFindings(p1, '🟠 P1 — Should fix');
+              body += renderFindings(p2, '🟡 P2 — Consider fixing');
+            }
+            body += `\n\n<sub>Verified by \`claude-sonnet-4-6\` · SHA \`${context.sha.slice(0,7)}\` · ${new Date().toISOString()}</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Code Review') && c.body.includes('claude-sonnet-4-6')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail on P0 or P1 findings
+        run: |
+          FINDINGS=$(node -e "
+            const fs = require('fs');
+            try {
+              const d = JSON.parse(fs.readFileSync('/tmp/findings.json','utf8'));
+              const n = (d.findings||[]).filter(f=>f.severity==='P0'||f.severity==='P1').length;
+              process.stdout.write(String(n));
+            } catch(e) { process.stdout.write('0'); }
+          ")
+          if [ "$FINDINGS" -gt 0 ]; then
+            echo "Blocking findings ($FINDINGS P0/P1). See PR comment."
+            exit 1
+          fi

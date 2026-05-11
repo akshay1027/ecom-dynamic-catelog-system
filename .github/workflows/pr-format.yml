@@ -1,0 +1,121 @@
+name: PR Auto-Format
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dev dependencies
+        run: npm install
+
+      - name: Run Prettier
+        run: npm run format:fix
+
+      - name: Run ESLint fix
+        run: npm run lint:fix
+
+      - name: Check for changes
+        id: git_diff
+        run: |
+          if git diff --exit-code; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push fixes
+        if: steps.git_diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style: auto-fix formatting and lint [skip ci]"
+          git push origin HEAD:${{ github.head_ref }}
+
+      - name: Run lint check after fixes
+        id: lint_check
+        run: npm run lint:check
+        continue-on-error: true
+
+      - name: Post failure comment
+        if: steps.lint_check.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = `## ❌ Auto-format: Lint errors remain after auto-fix
+
+ESLint reported errors that could not be auto-fixed. Please fix them manually.
+
+\`\`\`bash
+npm install        # at repo root
+npm run lint:fix   # auto-fixable issues
+npm run lint:check # see remaining errors
+\`\`\`
+
+<sub>SHA \`${context.sha.slice(0,7)}\` · ${new Date().toISOString()}</sub>`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Fail if lint could not be auto-fixed
+        if: steps.lint_check.outcome == 'failure'
+        run: exit 1
+
+      - name: Post success comment
+        if: steps.lint_check.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const wasFixed = '${{ steps.git_diff.outputs.changed }}' === 'true';
+            const body = wasFixed
+              ? `## ✅ Auto-format: Fixes applied\n\nPrettier and ESLint auto-fixes committed to this branch.\n\n<sub>SHA \`${context.sha.slice(0,7)}\` · ${new Date().toISOString()}</sub>`
+              : `## ✅ Auto-format: Already clean\n\nNo formatting or lint fixes needed.\n\n<sub>SHA \`${context.sha.slice(0,7)}\` · ${new Date().toISOString()}</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Auto-format')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
